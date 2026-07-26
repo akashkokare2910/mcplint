@@ -1,0 +1,53 @@
+# Example workflow for MCPLint users: gate a PR on MCP tool-contract quality.
+#
+# This is a *documented example*, not part of MCPLint's own CI — copy it into
+# your MCP server's repo and adjust the "Start the MCP server" step. It:
+#   1. Installs MCPLint
+#   2. Invokes the local MCP server
+#   3. Runs the scanner
+#   4. Uploads SARIF to GitHub code scanning
+#   5. Fails the job on error-severity findings
+#
+# No custom JavaScript Action is required — this composite-style workflow
+# (plain steps) is sufficient, per MCPLint's own security stance of never
+# running a hosted service that executes arbitrary server commands.
+name: mcplint-scan-example
+
+on:
+  workflow_dispatch: # example only — trigger manually; adapt `on:` for real use
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 1. Install MCPLint
+      - name: Install MCPLint
+        run: pip install mcplint
+
+      # 2 & 3. Invoke the local MCP server and run the scanner.
+      # Replace the --server command with however your server is started —
+      # `python server.py`, `node server.js`, a built binary, etc.
+      - name: Scan the MCP server
+        run: |
+          mcplint scan \
+            --server "python examples/good_server/server.py" \
+            --format sarif \
+            --output mcplint-results.sarif \
+            --fail-on error
+
+      # 4. Upload SARIF to GitHub code scanning (visible in the Security tab).
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: mcplint-results.sarif
+
+      # 5. `mcplint scan` above already exits non-zero on error-severity
+      # findings (--fail-on error is the default), which fails this job.
