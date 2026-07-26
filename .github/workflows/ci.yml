@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege by default; no job in this workflow ever needs write
+# access to the repo, and nothing here ever touches PyPI or creates a
+# release — that only happens from release.yml, triggered by a tag push.
+permissions:
+  contents: read
+
 jobs:
   lint-typecheck-test:
     runs-on: ubuntu-latest
@@ -19,19 +25,22 @@ jobs:
       - name: Install MCPLint (dev extras)
         run: pip install -e ".[dev]"
 
-      - name: Ruff
+      - name: Ruff check
         run: ruff check src tests examples
+
+      - name: Ruff format check
+        run: ruff format --check src tests examples
 
       - name: MyPy
         run: mypy src
 
-      - name: pytest
+      - name: Unit + CLI tests with coverage
         run: pytest --cov=mcplint --cov-report=term-missing --cov-fail-under=80 tests/unit tests/cli
 
       - name: Integration tests (spawns real example MCP servers over stdio)
         run: pytest tests/integration
 
-  build:
+  build-and-verify-package:
     runs-on: ubuntu-latest
     needs: lint-typecheck-test
     steps:
@@ -42,13 +51,51 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install build backend
-        run: pip install build
+      - name: Install build backend and metadata checker
+        run: pip install build twine
 
       - name: Build sdist and wheel
         run: python -m build
+
+      - name: Inspect package metadata
+        run: twine check dist/*
 
       - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
+
+  install-and-smoke-test:
+    runs-on: ubuntu-latest
+    needs: build-and-verify-package
+    steps:
+      - uses: actions/checkout@v4 # only for examples/good_server, not for source install
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install the built wheel into a clean environment
+        run: |
+          python -m venv /tmp/mcplint-smoke
+          /tmp/mcplint-smoke/bin/pip install --quiet dist/*.whl
+
+      - name: CLI smoke tests
+        # Activate the venv (rather than calling mcplint by full path) so the
+        # `python examples/good_server/server.py` subprocess mcplint spawns
+        # also resolves to this venv's python — which has `mcp` installed as
+        # mcplint's own runtime dependency. Calling the binary by full path
+        # would leave `python` on PATH pointing at the bare system
+        # interpreter, which doesn't have `mcp` installed, and the spawned
+        # server would fail to import.
+        run: |
+          source /tmp/mcplint-smoke/bin/activate
+          mcplint --version
+          mcplint rules
+          mcplint scan --server "python examples/good_server/server.py"
