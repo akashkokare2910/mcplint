@@ -49,9 +49,31 @@
   the Phase 2 known limitation about undocumented parameters.
 - 99 tests passing, 96%+ coverage. Ruff/MyPy clean.
 
+## Completed (Phase 4)
+- Models: `ExpectedToolCall`, `BenchmarkCase`, `BenchmarkDataset`, `ActualToolCall`,
+  `BenchmarkTrial`, `BenchmarkResult`.
+- `ToolCallingProvider` Protocol + `ProviderResult`; `FakeProvider` wraps a plain
+  Python function so scorer/runner tests make zero network calls.
+- Scorer (`benchmark/scorer.py`): `validate_arguments` (jsonschema-based),
+  `score_trial` (exact tool match, forbidden-tool check, argument equality —
+  no LLM judge), `aggregate_metrics` (accuracy, valid-argument rate,
+  required-argument accuracy, forbidden-tool rate, no-tool rate, mean/P95
+  latency, total cost, per-case pass rate, stability).
+- `benchmark/runner.py::run_benchmark` ties dataset + tools + provider + scorer
+  into a `BenchmarkResult`.
+- `benchmark/providers/factory.py::create_provider` — `"fake"` works now;
+  `"anthropic"`/`"openai"` raise `ProviderNotAvailableError` with an actionable
+  message rather than silently stubbing (per doc's "do not silently stub"
+  rule) — real Phase 5 TODO.
+- `mcplint benchmark DATASET --server/--snapshot --provider --runs --format
+  --output` CLI command, with a Rich terminal reporter for `BenchmarkResult`.
+- `examples/ambiguous_customer_server/customer-tools.evals.yaml`: the
+  get/search/update/delete-customer confusion dataset, run end-to-end against
+  the live example server with `--provider fake` in CLI tests.
+- 119 tests passing, 95% coverage. Ruff/MyPy clean.
+
 ## Incomplete
-- `benchmark`, `fix`, `compare` commands (Phase 4/5).
-- Benchmark dataset format, fake provider, scorer (Phase 4).
+- `fix`, `compare` commands (Phase 5).
 - Anthropic provider, `compare` command, `fix` suggestions (Phase 5).
 - Overall 0-100 explainable score (Phase 6, per spec p.7 — deferred from
   Phase 3 since it's listed under Phase 6 in the doc's phase breakdown and
@@ -110,9 +132,9 @@
   `load_config`'s existing missing-path behavior from before the CLI was wired up.
 
 ## Next task
-Phase 4: benchmark dataset format (`BenchmarkCase`, `ExpectedToolCall`
-Pydantic models validating the spec's YAML shape), a fake `ToolCallingProvider`
-for deterministic scorer tests, the `BenchmarkTrial`/`BenchmarkResult` models
-and scorer (exact tool-selection accuracy, valid-argument rate,
-required-argument accuracy, forbidden-tool rate, no-tool rate, latency,
-stability across trials), and the `mcplint benchmark` CLI command.
+Phase 5: Anthropic provider adapter (structure OpenAI as a separate stub
+per spec, don't let it block Anthropic), `mcplint compare` (snapshot diff +
+optional benchmark re-run + `--min-accuracy-delta` CI threshold), and
+`mcplint fix` (deterministic rewrite suggestions first, optional
+LLM-assisted rewriting behind an explicit provider flag, Markdown patch
+report, never overwrite source files).

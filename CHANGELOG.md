@@ -42,3 +42,18 @@
   `ambiguous-tool-overlap`.
 - `examples/good_server` reworked to use `Annotated[..., Field(description=...)]`
   parameters and explicit tool annotations; verified to produce zero findings.
+- Benchmark models: `ExpectedToolCall`, `BenchmarkCase`, `BenchmarkDataset`,
+  `ActualToolCall`, `BenchmarkTrial`, `BenchmarkResult`.
+- `ToolCallingProvider` protocol + `ProviderResult`; `FakeProvider` for
+  network-free tests and dry runs.
+- Deterministic scorer (`score_trial`, `aggregate_metrics`): exact
+  tool-selection accuracy, valid-argument rate (JSON Schema validated),
+  required-argument accuracy, forbidden-tool invocation rate, no-tool rate,
+  mean/P95 latency, total estimated cost, per-case pass rate, and stability
+  across repeated trials. No LLM judge.
+- `mcplint benchmark DATASET --server "<command>" --provider fake --runs N`
+  CLI command with terminal/JSON output and `--output PATH`.
+  `--provider anthropic|openai` is recognized but raises a clear
+  "not implemented yet" error (Phase 5).
+- `examples/ambiguous_customer_server/customer-tools.evals.yaml`: the
+  get/search/update/delete-customer confusion dataset required by the spec.
