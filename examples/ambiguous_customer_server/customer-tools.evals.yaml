@@ -1,0 +1,35 @@
+name: customer-tools
+version: "1"
+cases:
+  - id: exact-customer-lookup
+    prompt: Retrieve customer 1042.
+    expected:
+      tool: get_customer
+      arguments:
+        customer_id: "1042"
+      forbidden_tools:
+        - delete_customer
+        - update_customer
+
+  - id: customer-search
+    prompt: Find customers by searching for customer id 1042.
+    expected:
+      tool: search_customers
+      argument_assertions:
+        customer_id: "1042"
+
+  - id: customer-update-not-lookup
+    prompt: Update customer 1042's notification settings.
+    expected:
+      tool: update_customer
+      forbidden_tools:
+        - get_customer
+        - delete_customer
+
+  - id: customer-delete-not-lookup
+    prompt: Permanently delete customer 1042 from the system.
+    expected:
+      tool: delete_customer
+      forbidden_tools:
+        - get_customer
+        - update_customer
