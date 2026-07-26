@@ -6,100 +6,113 @@
   `ToolContract`, `MCPServerSnapshot`.
 - Canonicalization: `stable_tool_id`, `canonical_json`.
 - Stdio snapshot collection against the real `mcp` SDK (verified: `mcp==1.28.1`).
-- `examples/good_server` fixture + integration test (spawns a real subprocess over stdio).
+- `examples/good_server` fixture + integration test.
 - `mcplint inspect` CLI command with CI-meaningful exit codes.
 
 ## Completed (Phase 2)
-- Models: `Severity` (`StrEnum`), `Finding`, `RuleMetadata`, `LintReport`
-  (with `count_by_severity()`).
-- `Rule` ABC (class-level `id`/`title`/`description`/`default_severity`/`tags`,
-  `check(tool, context) -> list[Finding]`), `RuleContext` (frozen, wraps a
-  snapshot), `RuleRegistry` (register/get/all, duplicate-id guard,
-  `load_entry_point_plugins()` via `importlib.metadata.entry_points(group="mcplint.rules")`,
-  `with_builtin_rules()` classmethod).
-- Five built-in rules, each with unit tests covering flag and pass cases:
-  - `missing-tool-description` (error, confidence 1.0)
-  - `description-repeats-name` (warning, confidence 0.9)
-  - `vague-tool-description` (warning, confidence 0.7, <4-word threshold)
-  - `missing-parameter-description` (warning, confidence 1.0, per-parameter)
-  - `schema-description-type-conflict` (error, confidence 0.6, regex-hint based)
-- `lint_snapshot(snapshot, registry) -> LintReport` — pure engine function, no I/O.
-- Snapshot persistence: `save_snapshot`/`load_snapshot` (JSON roundtrip via Pydantic).
-- Reporters: `render_terminal` (Rich, pure function via in-memory console),
-  `render_json` (`LintReport.model_dump_json`).
-- `mcplint snapshot --server "<cmd>" --output PATH` CLI command.
-- `mcplint scan --server "<cmd>"` / `mcplint scan --snapshot PATH` CLI command:
-  `--format terminal|json`, `--fail-on error|warning|never` (default `error`),
-  exit 0/1 based on whether any finding meets the fail-on threshold, exit 2 on
-  usage errors (both or neither of `--server`/`--snapshot` given).
-- 54 tests passing, 94% overall coverage; `core`, `models`, `mcp_client`,
-  `reporters` packages at or near 100%.
+- Models: `Severity` (`StrEnum`), `Finding`, `RuleMetadata`, `LintReport`.
+- `Rule` ABC, `RuleContext`, `RuleRegistry` (entry-point plugin loading).
+- Five built-in rules with unit tests.
+- `lint_snapshot(snapshot, registry) -> LintReport` — pure engine function.
+- Snapshot persistence, terminal + JSON reporters.
+- `mcplint snapshot` and `mcplint scan` CLI commands.
+
+## Completed (Phase 3)
+- Remaining 10 built-in rules — **all 15 spec rules now implemented**:
+  - `missing-return-semantics`, `undocumented-error-behaviour`,
+    `undocumented-required-constraint` (`completeness_rules.py`)
+  - `tool-name-action-conflict`, `destructive-tool-without-warning`,
+    `state-changing-tool-marked-read-only` (`safety_rules.py`)
+  - `ambiguous-tool-overlap`, `missing-tool-distinction` (`ambiguity_rules.py`,
+    backed by the cross-tool `compute_ambiguity` engine in `ambiguity.py`)
+  - `excessive-description-length`, `undefined-domain-term` (`completeness_rules.py`)
+- Ambiguity engine: 0-1 score from name (25%) + description (45%, stopword-filtered
+  Jaccard) + parameter-name (30%) similarity; every flagged pair carries
+  structured evidence (`shared_verbs`, `shared_entities`, `overlapping_parameters`,
+  and three boolean "absent distinction" flags) — inspectable, not an opaque
+  number, per spec p.4.
+- `mcplint.yaml` config: `MCPLintConfig` (severity overrides, ambiguity/
+  description-length thresholds, per-tool `ignore` entries, `benchmark`
+  defaults), loaded via `load_config()` with actionable `ConfigError` messages
+  on invalid YAML. `RuleRegistry.with_builtin_rules(config)` applies threshold
+  overrides; `lint_snapshot(..., config)` applies ignores and severity overrides.
+  Wired into `mcplint scan --config`.
+- `mcplint rules` CLI command.
+- `examples/bad_server`: 12 tools, each a deliberate trigger for one or more
+  rules; an integration test asserts all 15 rule IDs fire.
+- `examples/ambiguous_customer_server`: `get_customer`/`search_customers`/
+  `update_customer`/`delete_customer`, verified to trigger
+  `ambiguous-tool-overlap` between the first two.
+- `examples/good_server` reworked (`Annotated[..., Field(description=...)]`
+  parameters, explicit `ToolAnnotations`) and verified via integration test
+  to produce **zero** findings against the full 15-rule registry — resolves
+  the Phase 2 known limitation about undocumented parameters.
+- 99 tests passing, 96%+ coverage. Ruff/MyPy clean.
 
 ## Incomplete
-- `benchmark`, `fix`, `compare`, `rules` commands (Phase 3+).
-- Remaining 10 built-in rules: `missing-return-semantics`,
-  `undocumented-error-behaviour`, `undocumented-required-constraint`,
-  `tool-name-action-conflict`, `destructive-tool-without-warning`,
-  `state-changing-tool-marked-read-only`, `ambiguous-tool-overlap`,
-  `missing-tool-distinction`, `excessive-description-length`,
-  `undefined-domain-term` (Phase 3).
-- Semantic ambiguity engine (Phase 3).
-- Configuration loading (`mcplint.yaml`), `--config`/`--ignore`/`--severity`
-  overrides (Phase 3).
-- Overall 0-100 explainable score (Phase 3, per spec p.7).
+- `benchmark`, `fix`, `compare` commands (Phase 4/5).
 - Benchmark dataset format, fake provider, scorer (Phase 4).
 - Anthropic provider, `compare` command, `fix` suggestions (Phase 5).
+- Overall 0-100 explainable score (Phase 6, per spec p.7 — deferred from
+  Phase 3 since it's listed under Phase 6 in the doc's phase breakdown and
+  benefits from benchmark accuracy being available as an input).
 - SARIF/HTML reporters, packaging polish, full docs (Phase 6).
 - HTTP transport for MCP servers (timeout, response-size limit, header
   redaction, no auto-redirects per spec's security constraints) — not yet
-  implemented, needed before Phase 6 docs claim HTTP support.
-- `examples/bad_server`, `examples/ambiguous_customer_server`, benchmark dataset
-  showing `get_customer`/`search_customers`/`update_customer`/`delete_customer`
-  confusion — deferred to Phase 3/4 once the remaining rules and ambiguity
-  engine exist to trigger.
+  implemented.
+- Optional sentence-transformer embeddings for the ambiguity engine (the
+  `semantic` extra) — interface allows for it (score is a weighted blend)
+  but no embedding backend is wired in yet; deterministic token/name/schema
+  similarity is the only mode. Not required for v1 per spec ("optional").
 
 ## Known limitations
 - `inspect`/`snapshot`/`scan` only support stdio transport.
-- No config file support yet — commands take CLI flags only; `--config`,
-  `--output` (global), `--verbose` not yet wired.
-- `examples/good_server`'s parameter docstrings (e.g. `customer_id: the exact
-  customer identifier...`) are not propagated into `inputSchema.properties.*.description`
-  by FastMCP from a plain function docstring — confirmed by running
-  `mcplint scan` against it, which correctly flags `missing-parameter-description`
-  for both tools. This is a real, useful finding, not a bug in the rule; fixing
-  the example to use `Annotated[str, Field(description=...)]` parameters is
-  deferred to Phase 3 when `examples/good_server` is revisited as the "clean"
-  baseline for `examples/bad_server` contrast.
-- `schema-description-type-conflict`'s regex hints (`number of`, `list of`,
-  `true or false`, etc.) are intentionally narrow to stay deterministic and
-  low-false-positive; broader semantic conflict detection is out of scope
-  for the deterministic rules (rules 1-14 must not use an LLM per spec p.3).
+- `--format`/`--output`/`--verbose` global options and SARIF/HTML formats
+  are not yet implemented — only `terminal`/`json`.
+- The ambiguity engine's Jaccard similarity does no stemming/lemmatization,
+  so plural/singular mismatches (e.g. "customer" vs "customers") reduce
+  measured overlap between genuinely similar tools. Confirmed while building
+  `examples/ambiguous_customer_server`: had to deliberately align tool
+  vocabulary (shared parameter names, matching root words) to cross the
+  default 0.55 threshold. This is a real precision/recall trade-off of the
+  deterministic approach, not a bug — the spec explicitly scopes stemming-free
+  token overlap as the baseline and sentence-transformer embeddings as the
+  optional upgrade path.
+- `undefined-domain-term`'s acronym heuristic (`\b[A-Z]{2,6}\b` minus a
+  well-known list) will both under- and over-flag on real-world servers;
+  it's intentionally conservative (info severity, confidence 0.4).
 
 ## Decisions made
-- Targeted Python 3.11 explicitly (via Homebrew `python3.11`) instead of the
-  system Python 3.14, to avoid dependency-compatibility risk with optional
-  extras (sentence-transformers) later in the project.
+- Targeted Python 3.11 explicitly (via Homebrew `python3.11`).
 - Verified the official `mcp` SDK API surface (v1.28.1) directly against a
-  running interpreter before writing any code.
-- `ToolContract.raw` stores the verbatim SDK tool dump so later rules can
-  inspect fields not yet promoted to typed model fields.
-- Added an explicit Typer `@app.callback()` in `cli/main.py` so the CLI stays
-  in subcommand mode as commands are added one at a time.
-- All CLI options use `Annotated[...]` (not bare `= typer.Option(...)` defaults)
-  for consistency and to avoid B008 lint ambiguity between commands.
-- `Finding.location` reuses `SourceLocation` (`models/contracts.py`) rather than
-  duplicating `tool_name`/`json_path` fields on `Finding`, per DRY.
-- `RuleContext` is a frozen Pydantic model wrapping the snapshot, not a plain
-  dataclass, so it validates the same way as every other typed artifact and
-  can carry config (Phase 3) without changing the `Rule.check()` signature.
-- `Severity` is `StrEnum` (not `str, Enum`) per Ruff UP042 — `StrEnum` is
-  available since Python 3.11, which matches the project's floor.
-- Local git identity configured per-repo (not global), using the user's email
-  from session context.
+  running interpreter before writing any code, including confirming that
+  `Annotated[T, Field(description=...)]` on FastMCP tool parameters produces
+  `description`/`enum` in the generated `inputSchema`, and that a plain
+  `dict`/`list` return annotation (vs. `dict[str, str]`) avoids FastMCP
+  auto-generating an `outputSchema` — both load-bearing for the example
+  servers' intended rule triggers.
+- Cross-tool rules (`ambiguous-tool-overlap`, `missing-tool-distinction`)
+  still use the standard `Rule.check(tool, context)` signature, iterating
+  `context.snapshot.tools` and only emitting a finding when
+  `other.name > tool.name`, so each unordered pair is reported exactly once
+  even though the engine calls every rule once per tool.
+- `AmbiguityPairResult`/`AmbiguityEvidence` are plain frozen dataclasses
+  internal to `core/rules/ambiguity.py`, not persisted Pydantic models —
+  the spec's model list doesn't include a standalone ambiguity artifact;
+  results surface through `Finding.evidence` text.
+- Renamed `safety_rules._first_word` to public `first_word` so
+  `ambiguity.py` could import it without reaching into a private name.
+- Config threshold overrides mutate rule *instances* (`rule.threshold = ...`)
+  produced fresh per `with_builtin_rules()` call, never the class attribute —
+  no cross-test or cross-request pollution.
+- `--config` defaults to `Path("mcplint.yaml")` (spec's documented default)
+  and silently falls back to defaults when the file doesn't exist, matching
+  `load_config`'s existing missing-path behavior from before the CLI was wired up.
 
 ## Next task
-Phase 3: remaining 10 built-in rules, the semantic ambiguity engine
-(token/name/description/input-schema similarity, optional sentence-transformer
-embeddings, explainable evidence per flagged pair), `mcplint.yaml` configuration
-loading, and `examples/bad_server` + `examples/ambiguous_customer_server`
-fixtures that intentionally trigger every rule.
+Phase 4: benchmark dataset format (`BenchmarkCase`, `ExpectedToolCall`
+Pydantic models validating the spec's YAML shape), a fake `ToolCallingProvider`
+for deterministic scorer tests, the `BenchmarkTrial`/`BenchmarkResult` models
+and scorer (exact tool-selection accuracy, valid-argument rate,
+required-argument accuracy, forbidden-tool rate, no-tool rate, latency,
+stability across trials), and the `mcplint benchmark` CLI command.
