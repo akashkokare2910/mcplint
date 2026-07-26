@@ -59,12 +59,14 @@ def test_lint_snapshot_clean_server_has_no_findings() -> None:
         id="a",
         name="get_customer",
         description=(
-            "Retrieve a single customer record by its exact customer ID (format CUST-XXXX)."
+            "Retrieve a single customer record by its exact customer identifier. "
+            "Returns the customer's profile fields as JSON. Raises an error if "
+            "the identifier does not exist."
         ),
         input_schema={"type": "object", "properties": {}},
         output_schema=None,
         parameters=[],
-        annotations=ToolAnnotation(),
+        annotations=ToolAnnotation(read_only_hint=True, destructive_hint=False),
         raw={},
     )
     report = lint_snapshot(_snapshot(clean), RuleRegistry.with_builtin_rules())

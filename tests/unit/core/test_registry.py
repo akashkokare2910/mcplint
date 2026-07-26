@@ -65,7 +65,7 @@ def test_rule_context_holds_snapshot() -> None:
     assert context.snapshot.server_name == "s"
 
 
-def test_with_builtin_rules_registers_all_five() -> None:
+def test_with_builtin_rules_registers_all_fifteen() -> None:
     registry = RuleRegistry.with_builtin_rules()
     ids = {rule.id for rule in registry.all()}
     assert ids == {
@@ -73,5 +73,16 @@ def test_with_builtin_rules_registers_all_five() -> None:
         "description-repeats-name",
         "vague-tool-description",
         "missing-parameter-description",
+        "missing-return-semantics",
+        "undocumented-error-behaviour",
+        "undocumented-required-constraint",
         "schema-description-type-conflict",
+        "tool-name-action-conflict",
+        "destructive-tool-without-warning",
+        "state-changing-tool-marked-read-only",
+        "ambiguous-tool-overlap",
+        "missing-tool-distinction",
+        "excessive-description-length",
+        "undefined-domain-term",
     }
+    assert len(ids) == 15
