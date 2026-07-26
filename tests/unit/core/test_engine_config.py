@@ -12,7 +12,9 @@ from mcplint.models.snapshot import MCPServerSnapshot
 def _snapshot(*tools: ToolContract) -> MCPServerSnapshot:
     return MCPServerSnapshot(
         metadata=ArtifactMetadata(
-            schema_version="1.0", generated_at=datetime(2026, 1, 1, tzinfo=UTC), mcplint_version="0.1.0"
+            schema_version="1.0",
+            generated_at=datetime(2026, 1, 1, tzinfo=UTC),
+            mcplint_version="0.1.0",
         ),
         server_name="s",
         server_version=None,

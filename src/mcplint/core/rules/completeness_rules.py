@@ -172,7 +172,9 @@ class ExcessiveDescriptionLengthRule(Rule):
                 ),
                 evidence=f"description length: {len(tool.description)}",
                 location=SourceLocation(tool_name=tool.name, json_path="$.description"),
-                remediation="Trim the description to the essential behaviour, inputs, and distinctions.",
+                remediation=(
+                    "Trim the description to the essential behaviour, inputs, and distinctions."
+                ),
                 confidence=0.8,
             )
         ]

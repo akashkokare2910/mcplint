@@ -33,11 +33,15 @@ class AmbiguousToolOverlapRule(Rule):
             result = compute_ambiguity(tool, other)
             if result.score < self.threshold:
                 continue
-            evidence_parts = [f"ambiguity score {result.score:.2f} (threshold {self.threshold:.2f})"]
+            evidence_parts = [
+                f"ambiguity score {result.score:.2f} (threshold {self.threshold:.2f})"
+            ]
             if result.evidence.shared_verbs:
                 evidence_parts.append(f"shared verbs: {', '.join(result.evidence.shared_verbs)}")
             if result.evidence.shared_entities:
-                evidence_parts.append(f"shared entities: {', '.join(result.evidence.shared_entities)}")
+                evidence_parts.append(
+                    f"shared entities: {', '.join(result.evidence.shared_entities)}"
+                )
             if result.evidence.overlapping_parameters:
                 evidence_parts.append(
                     f"overlapping parameters: {', '.join(result.evidence.overlapping_parameters)}"

@@ -100,10 +100,11 @@ def compute_ambiguity(tool_a: ToolContract, tool_b: ToolContract) -> AmbiguityPa
         and {verb_a, verb_b} & _MANY_HINTS
         and "exact" not in combined_description
     )
+    one_vs_many_keywords = ("single", "one or more", "list of", "multiple")
     absent_one_vs_many = (
         bool({verb_a, verb_b} & _ONE_HINTS)
         and bool({verb_a, verb_b} & _MANY_HINTS)
-        and not any(kw in combined_description for kw in ("single", "one or more", "list of", "multiple"))
+        and not any(kw in combined_description for kw in one_vs_many_keywords)
     )
     read_only_a = bool(tool_a.annotations.read_only_hint)
     read_only_b = bool(tool_b.annotations.read_only_hint)

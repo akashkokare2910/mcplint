@@ -19,7 +19,7 @@ REPORT_SCHEMA_VERSION = "1.0"
 def lint_snapshot(
     snapshot: MCPServerSnapshot,
     registry: RuleRegistry,
-    config: "MCPLintConfig | None" = None,
+    config: MCPLintConfig | None = None,
 ) -> LintReport:
     context = RuleContext(snapshot=snapshot)
     all_rule_ids = {rule.id for rule in registry.all()}

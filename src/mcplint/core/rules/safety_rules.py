@@ -8,9 +8,14 @@ from mcplint.core.rules.base import Rule, RuleContext
 from mcplint.models.contracts import SourceLocation, ToolContract
 from mcplint.models.findings import Finding, Severity
 
-READ_VERBS = frozenset({"get", "list", "search", "find", "fetch", "query", "view", "show", "read"})
+READ_VERBS = frozenset(
+    {"get", "list", "search", "find", "fetch", "query", "view", "show", "read"}
+)
 WRITE_VERBS = frozenset(
-    {"create", "update", "delete", "remove", "set", "add", "modify", "edit", "insert", "upsert", "patch"}
+    {
+        "create", "update", "delete", "remove", "set", "add", "modify", "edit",
+        "insert", "upsert", "patch",
+    }
 )
 _DESTRUCTIVE_WARNING_HINTS = re.compile(
     r"\b(permanent|permanently|irreversible|cannot be undone|cannot be reversed|destructive)\b",
@@ -48,7 +53,9 @@ class ToolNameActionConflictRule(Rule):
                     f"name starts with a read verb ('{first_word(tool.name)}') "
                     "but annotations.destructiveHint is true"
                 ),
-                location=SourceLocation(tool_name=tool.name, json_path="$.annotations.destructiveHint"),
+                location=SourceLocation(
+                    tool_name=tool.name, json_path="$.annotations.destructiveHint"
+                ),
                 remediation=(
                     "Rename the tool to reflect its real effect, or correct the "
                     "destructive annotation if the tool is genuinely read-only."
@@ -113,7 +120,9 @@ class StateChangingToolMarkedReadOnlyRule(Rule):
                     f"name starts with a write verb ('{first_word(tool.name)}') "
                     "but annotations.readOnlyHint is true"
                 ),
-                location=SourceLocation(tool_name=tool.name, json_path="$.annotations.readOnlyHint"),
+                location=SourceLocation(
+                    tool_name=tool.name, json_path="$.annotations.readOnlyHint"
+                ),
                 remediation=(
                     "Correct readOnlyHint to false for this tool, since agents may "
                     "rely on it to decide whether a call is safe to retry or sandbox."
