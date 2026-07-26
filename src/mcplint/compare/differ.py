@@ -96,12 +96,13 @@ def diff_ambiguity(
     changes: list[AmbiguityScoreChange] = []
     for index, name_a in enumerate(common):
         for name_b in common[index + 1 :]:
-            before_score = compute_ambiguity(
-                baseline.get_tool(name_a), baseline.get_tool(name_b)  # type: ignore[arg-type]
-            ).score
-            after_score = compute_ambiguity(
-                candidate.get_tool(name_a), candidate.get_tool(name_b)  # type: ignore[arg-type]
-            ).score
+            baseline_a, baseline_b = baseline.get_tool(name_a), baseline.get_tool(name_b)
+            candidate_a, candidate_b = candidate.get_tool(name_a), candidate.get_tool(name_b)
+            assert baseline_a is not None and baseline_b is not None
+            assert candidate_a is not None and candidate_b is not None
+
+            before_score = compute_ambiguity(baseline_a, baseline_b).score
+            after_score = compute_ambiguity(candidate_a, candidate_b).score
             if abs(before_score - after_score) > _FLOAT_EPSILON:
                 changes.append(
                     AmbiguityScoreChange(

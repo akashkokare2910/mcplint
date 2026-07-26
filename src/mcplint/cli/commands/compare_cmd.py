@@ -22,6 +22,7 @@ from mcplint.compare.differ import (
 from mcplint.core.engine import lint_snapshot
 from mcplint.core.registry import RuleRegistry
 from mcplint.mcp_client.persistence import load_snapshot
+from mcplint.models.benchmark import BenchmarkResult
 from mcplint.models.common import ArtifactMetadata
 from mcplint.models.comparison import ComparisonReport
 from mcplint.reporters.comparison_terminal import render_comparison_terminal
@@ -99,7 +100,7 @@ def compare_command(
             error_console.print(f"[bold red]{exc}[/bold red]")
             raise typer.Exit(code=2) from exc
 
-        async def _run_both() -> tuple[object, object]:
+        async def _run_both() -> tuple[BenchmarkResult, BenchmarkResult]:
             baseline_result = await run_benchmark(
                 dataset, baseline_snapshot.tools, chosen_provider, runs=runs
             )
@@ -109,13 +110,13 @@ def compare_command(
             return baseline_result, candidate_result
 
         baseline_result, candidate_result = anyio.run(_run_both)
-        deltas = diff_benchmarks(baseline_result, candidate_result)  # type: ignore[arg-type]
+        deltas = diff_benchmarks(baseline_result, candidate_result)
 
         report = report.model_copy(
             update={
                 "benchmark_dataset_name": dataset.name,
-                "baseline_accuracy": baseline_result.exact_tool_selection_accuracy,  # type: ignore[attr-defined]
-                "candidate_accuracy": candidate_result.exact_tool_selection_accuracy,  # type: ignore[attr-defined]
+                "baseline_accuracy": baseline_result.exact_tool_selection_accuracy,
+                "candidate_accuracy": candidate_result.exact_tool_selection_accuracy,
                 **deltas,
             }
         )

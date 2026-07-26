@@ -91,8 +91,7 @@ def compute_score(
                 points_lost=points,
                 finding_count=count,
                 explanation=(
-                    f"{count} {label} finding(s) x {per_finding:.0f} pts "
-                    f"(capped at {cap:.0f})"
+                    f"{count} {label} finding(s) x {per_finding:.0f} pts (capped at {cap:.0f})"
                 ),
             )
         )

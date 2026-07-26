@@ -64,15 +64,13 @@ def test_score_ambiguity_and_safety_are_not_double_counted_as_generic() -> None:
 
 
 def test_score_never_goes_below_zero() -> None:
-    findings = [_finding("missing-tool-description", Severity.ERROR) for _ in range(5)] + [
-        _finding("ambiguous-tool-overlap", Severity.WARNING) for _ in range(5)
-    ] + [
-        _finding("tool-name-action-conflict", Severity.ERROR) for _ in range(5)
-    ] + [
-        _finding("missing-parameter-description", Severity.WARNING) for _ in range(5)
-    ] + [
-        _finding("description-repeats-name", Severity.WARNING) for _ in range(20)
-    ]
+    findings = (
+        [_finding("missing-tool-description", Severity.ERROR) for _ in range(5)]
+        + [_finding("ambiguous-tool-overlap", Severity.WARNING) for _ in range(5)]
+        + [_finding("tool-name-action-conflict", Severity.ERROR) for _ in range(5)]
+        + [_finding("missing-parameter-description", Severity.WARNING) for _ in range(5)]
+        + [_finding("description-repeats-name", Severity.WARNING) for _ in range(20)]
+    )
     breakdown = compute_score(_report(findings))
     assert breakdown.total_score == 0
 

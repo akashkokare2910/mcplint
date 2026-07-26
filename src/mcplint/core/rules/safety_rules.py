@@ -8,13 +8,20 @@ from mcplint.core.rules.base import Rule, RuleContext
 from mcplint.models.contracts import SourceLocation, ToolContract
 from mcplint.models.findings import Finding, Severity
 
-READ_VERBS = frozenset(
-    {"get", "list", "search", "find", "fetch", "query", "view", "show", "read"}
-)
+READ_VERBS = frozenset({"get", "list", "search", "find", "fetch", "query", "view", "show", "read"})
 WRITE_VERBS = frozenset(
     {
-        "create", "update", "delete", "remove", "set", "add", "modify", "edit",
-        "insert", "upsert", "patch",
+        "create",
+        "update",
+        "delete",
+        "remove",
+        "set",
+        "add",
+        "modify",
+        "edit",
+        "insert",
+        "upsert",
+        "patch",
     }
 )
 _DESTRUCTIVE_WARNING_HINTS = re.compile(

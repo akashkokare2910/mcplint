@@ -31,9 +31,7 @@ def tool_from_mcp(server_name: str, tool: SDKTool) -> ToolContract:
             name=name,
             json_schema=prop_schema if isinstance(prop_schema, dict) else {},
             required=name in required,
-            description=(
-                prop_schema.get("description") if isinstance(prop_schema, dict) else None
-            ),
+            description=(prop_schema.get("description") if isinstance(prop_schema, dict) else None),
         )
         for name, prop_schema in properties.items()
     ]

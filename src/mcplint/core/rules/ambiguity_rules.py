@@ -100,7 +100,7 @@ class MissingToolDistinctionRule(Rule):
                     evidence=f"missing distinction(s): {', '.join(missing)}",
                     location=SourceLocation(tool_name=tool.name, json_path="$.description"),
                     remediation=(
-                        f"Add a sentence like \"Use {tool.name} when ... Use {other.name} "
+                        f'Add a sentence like "Use {tool.name} when ... Use {other.name} '
                         f'when ..." to both descriptions.'
                     ),
                     confidence=0.5,

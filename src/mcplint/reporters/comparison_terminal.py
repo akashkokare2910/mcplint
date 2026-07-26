@@ -14,8 +14,7 @@ def render_comparison_terminal(report: ComparisonReport) -> str:
     console = Console(file=buffer, width=140, record=True)
 
     console.print(
-        f"[bold]{report.baseline_server_name}[/bold] -> "
-        f"[bold]{report.candidate_server_name}[/bold]"
+        f"[bold]{report.baseline_server_name}[/bold] -> [bold]{report.candidate_server_name}[/bold]"
     )
 
     if report.added_tools:

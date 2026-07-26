@@ -52,9 +52,7 @@ def test_fix_prints_markdown_suggestions(tmp_path: Path) -> None:
 def test_fix_writes_output_file(tmp_path: Path) -> None:
     path = _snapshot_path(tmp_path)
     output_path = tmp_path / "fix-report.md"
-    result = runner.invoke(
-        app, ["fix", "--snapshot", str(path), "--output", str(output_path)]
-    )
+    result = runner.invoke(app, ["fix", "--snapshot", str(path), "--output", str(output_path)])
     assert result.exit_code == 0, result.output
     assert output_path.exists()
     assert "delete_customer" in output_path.read_text()

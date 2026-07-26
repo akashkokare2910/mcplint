@@ -4,11 +4,38 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcplint"
-version = "0.1.0"
+dynamic = ["version"]
 description = "ESLint for MCP tool contracts"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
+authors = [
+  { name = "Akash Kokare", email = "akashkokare2017@gmail.com" },
+]
+keywords = [
+  "mcp",
+  "model-context-protocol",
+  "llm",
+  "agent",
+  "lint",
+  "tool-calling",
+  "evaluation",
+  "ai",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Testing",
+  "Typing :: Typed",
+]
 dependencies = [
   "typer>=0.12",
   "pydantic>=2.7",
@@ -36,8 +63,17 @@ dev = [
   "types-jsonschema",
 ]
 
+[project.urls]
+Homepage = "https://github.com/akashkokare2910/mcplint"
+Repository = "https://github.com/akashkokare2910/mcplint"
+Issues = "https://github.com/akashkokare2910/mcplint/issues"
+Changelog = "https://github.com/akashkokare2910/mcplint/blob/main/CHANGELOG.md"
+
 [project.scripts]
 mcplint = "mcplint.cli.main:app"
+
+[tool.hatch.version]
+path = "src/mcplint/__about__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcplint"]

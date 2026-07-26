@@ -51,9 +51,9 @@ def scan_command(
     fail_on: Annotated[
         str, typer.Option("--fail-on", help="Minimum severity that fails the command.")
     ] = "error",
-    config: Annotated[
-        Path, typer.Option("--config", help="Path to mcplint.yaml.")
-    ] = Path("mcplint.yaml"),
+    config: Annotated[Path, typer.Option("--config", help="Path to mcplint.yaml.")] = Path(
+        "mcplint.yaml"
+    ),
     output: Annotated[
         Path | None, typer.Option("--output", help="Path to also write the report to.")
     ] = None,

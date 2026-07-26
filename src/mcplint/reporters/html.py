@@ -27,9 +27,7 @@ def _score_class(total_score: int) -> str:
     return "bad"
 
 
-def _ambiguity_pairs(
-    snapshot: MCPServerSnapshot, threshold: float
-) -> list[AmbiguityPairResult]:
+def _ambiguity_pairs(snapshot: MCPServerSnapshot, threshold: float) -> list[AmbiguityPairResult]:
     pairs: list[AmbiguityPairResult] = []
     tools = sorted(snapshot.tools, key=lambda t: t.name)
     for index, tool_a in enumerate(tools):
