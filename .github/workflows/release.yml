@@ -87,7 +87,7 @@ jobs:
     needs: build
     environment:
       name: pypi
-      url: https://pypi.org/project/mcplint/${{ github.ref_name }}
+      url: https://pypi.org/p/mcplint-cli
     permissions:
       id-token: write
     steps:

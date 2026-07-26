@@ -19,7 +19,7 @@ prose. JSON Schema validation doesn't catch any of that. MCPLint does.
 ## 60-second quick start
 
 ```bash
-pip install mcplint
+pip install mcplint-cli
 
 # Point it at any MCP server's launch command
 mcplint scan --server "python my_server.py"

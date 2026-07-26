@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mcplint"
+name = "mcplint-cli"
 dynamic = ["version"]
-description = "ESLint for MCP tool contracts"
+description = "Lint and benchmark MCP tool contracts before ambiguous descriptions break LLM tool selection."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
@@ -96,3 +96,7 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+  "slow: builds a real wheel and creates a real venv; excluded from the default run, opt in with -m slow",
+]
+addopts = "-m 'not slow'"

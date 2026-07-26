@@ -27,9 +27,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      # 1. Install MCPLint
+      # 1. Install MCPLint (PyPI distribution name is mcplint-cli; the
+      # installed command is still `mcplint`)
       - name: Install MCPLint
-        run: pip install mcplint
+        run: pip install mcplint-cli
 
       # 2 & 3. Invoke the local MCP server and run the scanner.
       # Replace the --server command with however your server is started —
