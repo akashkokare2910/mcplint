@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from mcplint.models.common import ArtifactMetadata
 from mcplint.models.contracts import ToolAnnotation, ToolContract
@@ -22,7 +22,7 @@ def test_snapshot_get_tool_found() -> None:
     snapshot = MCPServerSnapshot(
         metadata=ArtifactMetadata(
             schema_version="1.0",
-            generated_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            generated_at=datetime(2026, 1, 1, tzinfo=UTC),
             mcplint_version="0.1.0",
         ),
         server_name="customer-server",
@@ -40,7 +40,7 @@ def test_snapshot_get_tool_missing() -> None:
     snapshot = MCPServerSnapshot(
         metadata=ArtifactMetadata(
             schema_version="1.0",
-            generated_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            generated_at=datetime(2026, 1, 1, tzinfo=UTC),
             mcplint_version="0.1.0",
         ),
         server_name="customer-server",

@@ -21,10 +21,10 @@ SNAPSHOT_SCHEMA_VERSION = "1.0"
 __all__ = ["collect_stdio_snapshot", "tool_from_mcp", "parse_command"]
 
 
-def tool_from_mcp(server_name: str, tool: "SDKTool") -> ToolContract:
+def tool_from_mcp(server_name: str, tool: SDKTool) -> ToolContract:
     schema = tool.inputSchema or {"type": "object"}
-    properties: dict[str, object] = schema.get("properties", {})  # type: ignore[assignment]
-    required: list[str] = schema.get("required", [])  # type: ignore[assignment]
+    properties: dict[str, object] = schema.get("properties", {})
+    required: list[str] = schema.get("required", [])
 
     parameters = [
         ParameterContract(
@@ -64,13 +64,12 @@ async def collect_stdio_snapshot(
     command: str, args: list[str], *, env: dict[str, str] | None = None
 ) -> MCPServerSnapshot:
     params = StdioServerParameters(command=command, args=args, env=env)
-    async with stdio_client(params) as (read, write):
-        async with ClientSession(read, write) as session:
-            init_result = await session.initialize()
-            server_name = init_result.serverInfo.name
-            server_version = init_result.serverInfo.version
-            listed = await session.list_tools()
-            tools = [tool_from_mcp(server_name, t) for t in listed.tools]
+    async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
+        init_result = await session.initialize()
+        server_name = init_result.serverInfo.name
+        server_version = init_result.serverInfo.version
+        listed = await session.list_tools()
+        tools = [tool_from_mcp(server_name, t) for t in listed.tools]
 
     command_line = " ".join([command, *args])
     return MCPServerSnapshot(

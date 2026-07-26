@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -15,9 +15,9 @@ class ArtifactMetadata(BaseModel):
     mcplint_version: str
 
     @classmethod
-    def create(cls, schema_version: str) -> "ArtifactMetadata":
+    def create(cls, schema_version: str) -> ArtifactMetadata:
         return cls(
             schema_version=schema_version,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             mcplint_version=_MCPLINT_VERSION,
         )

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from mcplint.mcp_client.canonical import canonical_json, stable_tool_id
 from mcplint.models.common import ArtifactMetadata
@@ -43,13 +43,13 @@ def _snapshot(generated_at: datetime) -> MCPServerSnapshot:
 
 
 def test_canonical_json_stable_across_generated_at() -> None:
-    first = _snapshot(datetime(2026, 1, 1, tzinfo=timezone.utc))
-    second = _snapshot(datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(days=30))
+    first = _snapshot(datetime(2026, 1, 1, tzinfo=UTC))
+    second = _snapshot(datetime(2026, 1, 1, tzinfo=UTC) + timedelta(days=30))
     assert canonical_json(first) == canonical_json(second)
 
 
 def test_canonical_json_changes_with_tool_content() -> None:
-    same_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    same_time = datetime(2026, 1, 1, tzinfo=UTC)
     base = _snapshot(same_time)
     mutated = _snapshot(same_time)
     mutated.tools[0].description = "Different description"

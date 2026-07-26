@@ -15,11 +15,11 @@ if TYPE_CHECKING:
 
 
 def stable_tool_id(server_name: str, tool_name: str) -> str:
-    digest = hashlib.sha256(f"{server_name}::{tool_name}".encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(f"{server_name}::{tool_name}".encode()).hexdigest()
     return digest[:16]
 
 
-def canonical_json(snapshot: "MCPServerSnapshot") -> str:
+def canonical_json(snapshot: MCPServerSnapshot) -> str:
     payload = snapshot.model_dump(mode="json")
     payload["metadata"].pop("generated_at", None)
     return json.dumps(payload, sort_keys=True, separators=(",", ":"))
