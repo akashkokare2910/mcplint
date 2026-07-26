@@ -48,7 +48,9 @@ def scan_command(
     ] = "error",
 ) -> None:
     if (server is None) == (snapshot is None):
-        error_console.print("[bold red]Exactly one of --server or --snapshot is required.[/bold red]")
+        error_console.print(
+            "[bold red]Exactly one of --server or --snapshot is required.[/bold red]"
+        )
         raise typer.Exit(code=2)
     if format not in ("terminal", "json"):
         error_console.print(f"[bold red]Unknown format: {format}[/bold red]")

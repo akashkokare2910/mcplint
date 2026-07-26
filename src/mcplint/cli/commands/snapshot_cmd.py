@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 import anyio
 import typer
@@ -17,8 +18,12 @@ error_console = Console(stderr=True)
 
 
 def snapshot_command(
-    server: str = typer.Option(..., "--server", help="Command line to launch the MCP server."),
-    output: Path = typer.Option(..., "--output", help="Path to write the snapshot JSON to."),
+    server: Annotated[
+        str, typer.Option("--server", help="Command line to launch the MCP server.")
+    ],
+    output: Annotated[
+        Path, typer.Option("--output", help="Path to write the snapshot JSON to.")
+    ],
 ) -> None:
     command, args = parse_command(server)
 

@@ -5,8 +5,8 @@ import pytest
 from mcplint.core.registry import RuleRegistry
 from mcplint.core.rules.base import Rule, RuleContext
 from mcplint.models.common import ArtifactMetadata
-from mcplint.models.findings import Finding, Severity
 from mcplint.models.contracts import ToolContract
+from mcplint.models.findings import Finding, Severity
 from mcplint.models.snapshot import MCPServerSnapshot
 
 

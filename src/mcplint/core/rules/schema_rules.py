@@ -72,7 +72,10 @@ class SchemaDescriptionTypeConflictRule(Rule):
                         f"Parameter '{param.name}' on tool '{tool.name}' reads as "
                         f"{expected_type!r} but the schema declares type {declared_type!r}."
                     ),
-                    evidence=f"description matched pattern '{hint}', schema type is {declared_type!r}",
+                    evidence=(
+                        f"description matched pattern '{hint}', "
+                        f"schema type is {declared_type!r}"
+                    ),
                     location=SourceLocation(
                         tool_name=tool.name, json_path=f"$.inputSchema.properties.{param.name}.type"
                     ),

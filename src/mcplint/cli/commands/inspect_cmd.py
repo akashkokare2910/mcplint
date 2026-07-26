@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 import anyio
 import typer
 from rich.console import Console
@@ -15,7 +17,9 @@ error_console = Console(stderr=True)
 
 
 def inspect_command(
-    server: str = typer.Option(..., "--server", help="Command line to launch the MCP server."),
+    server: Annotated[
+        str, typer.Option("--server", help="Command line to launch the MCP server.")
+    ],
 ) -> None:
     command, args = parse_command(server)
 

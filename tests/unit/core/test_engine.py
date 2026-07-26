@@ -58,7 +58,9 @@ def test_lint_snapshot_clean_server_has_no_findings() -> None:
     clean = ToolContract(
         id="a",
         name="get_customer",
-        description="Retrieve a single customer record by its exact customer ID (format CUST-XXXX).",
+        description=(
+            "Retrieve a single customer record by its exact customer ID (format CUST-XXXX)."
+        ),
         input_schema={"type": "object", "properties": {}},
         output_schema=None,
         parameters=[],

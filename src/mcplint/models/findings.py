@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
@@ -11,7 +11,7 @@ from mcplint.models.common import ArtifactMetadata
 from mcplint.models.contracts import SourceLocation
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
