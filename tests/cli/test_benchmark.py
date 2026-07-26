@@ -60,7 +60,7 @@ def test_benchmark_json_output_and_file(tmp_path: Path) -> None:
     assert '"dataset_name": "customer-tools"' in output_path.read_text()
 
 
-def test_benchmark_rejects_unimplemented_provider() -> None:
+def test_benchmark_requires_model_for_anthropic_provider() -> None:
     result = runner.invoke(
         app,
         [
@@ -73,7 +73,23 @@ def test_benchmark_rejects_unimplemented_provider() -> None:
         ],
     )
     assert result.exit_code == 2
-    assert "not implemented" in result.output
+    assert "--model is required" in result.output
+
+
+def test_benchmark_rejects_unknown_provider() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "benchmark",
+            str(DATASET),
+            "--server",
+            f"{sys.executable} {AMBIGUOUS_SERVER}",
+            "--provider",
+            "not-a-real-provider",
+        ],
+    )
+    assert result.exit_code == 2
+    assert "Unknown provider" in result.output
 
 
 def test_benchmark_requires_server_or_snapshot() -> None:
