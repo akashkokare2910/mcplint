@@ -116,14 +116,65 @@
   rewriting exists (real TODO, not a silent stub).
 - 153 tests passing, 93% coverage. Ruff/MyPy clean.
 
+## Completed (Phase 6)
+- `ScoreBreakdown`/`ScoreDeduction` models + `core/score.py::compute_score`:
+  documented, per-category-capped 0-100 score (critical/error up to 40 @ 8pts,
+  warning/info up to 20 @ 2pts, ambiguity up to 15 @ 5pts, schema completeness
+  up to 15 @ 3pts, safety clarity up to 15 @ 5pts, benchmark accuracy up to
+  15 proportional to 1-accuracy). Categories are mutually exclusive by
+  rule ID so nothing is double-counted. Explicit "not scientifically
+  universal" disclaimer on the model. Shown in the terminal reporter.
+- SARIF 2.1.0 reporter (`reporters/sarif.py`): full rule catalogue as
+  `tool.driver.rules`, one `result` per finding with `ruleId`/`level`/
+  `message`/`locations`; severity mapped error->error, warning->warning,
+  info->note. Verified with a structural smoke test (three tests covering
+  top-level shape, one result's shape, and rule-descriptor severity
+  levels) — not full JSON-Schema validation against the real SARIF schema,
+  since that would need network access the default test suite doesn't have.
+- Standalone HTML reporter (`reporters/html.py` + `templates/report.html.j2`):
+  score, findings-by-severity table, tool inventory, ambiguity pairs
+  (recomputed live from the snapshot, not stored), and optional
+  benchmark/before-after-comparison/remediation-suggestion sections when
+  those objects are passed in. Embedded CSS with a dark-mode media query,
+  zero external requests, zero `<script>` tags (verified by a test).
+  Confirmed the `.j2` template is actually included in the built wheel
+  (hatchling includes non-`.py` files under a package dir by default —
+  checked by building the wheel and inspecting its contents).
+- `mcplint scan --format sarif|html` and a new `--output PATH` global-ish
+  option on `scan` to also write the rendered report to a file regardless
+  of format.
+- `mcplint --version`.
+- Packaging: `LICENSE` (MIT), `CONTRIBUTING.md` (dev setup + rule/provider
+  extension guides), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1),
+  `SECURITY.md` (MCP-servers-are-untrusted-code threat model — running
+  `inspect`/`scan`/`benchmark`/`compare` against a server executes that
+  server's code locally; planned HTTP-transport security constraints;
+  secrets handling). GitHub bug-report/feature-request issue templates,
+  PR template. `.github/workflows/ci.yml` (lint, typecheck, unit+cli tests
+  with `--cov-fail-under=80`, integration tests, sdist/wheel build).
+  `.github/workflows/release.yml` (PyPI trusted publishing on `v*` tags).
+  `.github/workflows/example-scan-mcp-server.yml`: a documented example
+  workflow for *downstream* users — install MCPLint, invoke their server,
+  scan, upload SARIF via `github/codeql-action/upload-sarif`, fail on
+  error — no custom JavaScript Action, per spec. `Dockerfile` (untested —
+  no Docker available in this environment; standard `pip install .`
+  pattern against the existing `pyproject.toml`/`src` layout).
+  `.pre-commit-config.yaml` (ruff, ruff-format, mypy, standard hygiene
+  hooks) — written but not dry-run in this environment.
+- Full README rewrite: opens with the spec's exact problem statement,
+  60-second quickstart, real captured `mcplint scan` output against
+  `examples/bad_server`, architecture diagram, full rule catalogue table,
+  ambiguity-engine evidence model explained, benchmark/compare/fix/CI/
+  plugin guides, a limitations section cross-referencing this file, a
+  roadmap, and a comparison section (MCP Inspector, schema-diff tools,
+  generic LLM eval frameworks) that explicitly avoids superiority claims.
+- 168 tests passing, 94% coverage. Ruff/MyPy clean.
+
 ## Incomplete
-- Overall 0-100 explainable score (Phase 6, per spec p.7 — deferred from
-  Phase 3 since it's listed under Phase 6 in the doc's phase breakdown and
-  benefits from benchmark accuracy being available as an input).
-- SARIF/HTML reporters, packaging polish, full docs (Phase 6).
 - HTTP transport for MCP servers (timeout, response-size limit, header
   redaction, no auto-redirects per spec's security constraints) — not yet
-  implemented.
+  implemented; `inspect`/`snapshot`/`scan`/`benchmark`/`compare` are all
+  stdio-only.
 - Optional sentence-transformer embeddings for the ambiguity engine (the
   `semantic` extra) — interface allows for it (score is a weighted blend)
   but no embedding backend is wired in yet; deterministic token/name/schema
@@ -131,11 +182,14 @@
 - Real OpenAI benchmark provider (typed stub exists, raises `NotImplementedError`).
 - LLM-assisted rewriting for `mcplint fix` (`--llm-provider` flag exists and
   is validated, but always rejected — no LLM call path implemented).
+- `--verbose` global option is not implemented.
+- Dockerfile and `.pre-commit-config.yaml` are written to standard patterns
+  but not executed/dry-run in this environment (no Docker, and running
+  `pre-commit run --all-files` with `ruff-format` would reformat the whole
+  tree in ways not reviewed here) — worth doing before a real release.
 
 ## Known limitations
-- `inspect`/`snapshot`/`scan` only support stdio transport.
-- `--format`/`--output`/`--verbose` global options and SARIF/HTML formats
-  are not yet implemented — only `terminal`/`json`.
+- `inspect`/`snapshot`/`scan`/`benchmark`/`compare` only support stdio transport.
 - The ambiguity engine's Jaccard similarity does no stemming/lemmatization,
   so plural/singular mismatches (e.g. "customer" vs "customers") reduce
   measured overlap between genuinely similar tools. Confirmed while building
@@ -190,14 +244,28 @@
   `tool.parameters` via the finding's `json_path` rather than parsing
   `Finding.evidence` text, so a rule's message wording can change without
   breaking the fixer.
+- Score categories partition findings by rule ID (ambiguity/schema/safety
+  rule-ID sets checked first, generic error/warning bucket last) rather
+  than by severity alone, so e.g. `destructive-tool-without-warning`
+  (severity error) is counted once under `safety_clarity`, not also under
+  the generic `critical_error` bucket.
+- HTML report recomputes ambiguity pairs live from the snapshot at render
+  time (via `compute_ambiguity`) instead of reading them off `LintReport`,
+  since ambiguity results aren't a stored artifact (see Phase 3 decision
+  above) — keeps the HTML reporter as the one place that needs both the
+  snapshot and the report.
+- `mcplint scan`'s SARIF/HTML formats reuse the same `RuleRegistry.with_builtin_rules()`
+  default (unconfigured) registry for the SARIF rule catalogue, independent
+  of whatever config-derived registry produced the findings — the catalogue
+  describes what rules exist, not what ran.
 
 ## Next task
-Phase 6: SARIF 2.1.0 reporter (+ schema smoke test), standalone HTML report
-(Jinja2, no backend, embedded CSS), the explainable 0-100 overall score
-(documented weighting: critical/error findings, warnings, ambiguity, schema
-completeness, safety clarity, benchmark accuracy when available), packaging
-(LICENSE, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, GitHub issue/PR templates,
-GitHub Actions for lint/typecheck/test/build, Dockerfile, pre-commit config),
-and the full README rewrite (60-second quickstart, example output,
-architecture, rule catalogue, benchmark guide, CI guide, plugin guide,
-limitations, roadmap, comparison section).
+The project now implements every command, model, rule, and reporter listed
+in the spec's required scope, with the explicitly-deferred exceptions
+above (HTTP transport, semantic-extra embeddings, OpenAI provider,
+LLM-assisted fix). Suggested next steps for a real release: dry-run
+`.pre-commit-config.yaml` and the `Dockerfile` build in an environment that
+has Docker/pre-commit available, do a real end-to-end SARIF-schema
+validation (network access to the official schema), and decide whether
+HTTP transport or the `semantic` embedding extra is the higher-value next
+increment.

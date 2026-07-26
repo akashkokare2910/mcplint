@@ -73,3 +73,24 @@
 - `mcplint fix --snapshot [--output PATH]` CLI command — never overwrites
   source files; `--llm-provider` is recognized but explicitly rejected
   until LLM-assisted rewriting is implemented.
+- `ScoreBreakdown` model + `core/score.py::compute_score`: explainable 0-100
+  score, capped per category (critical/error, warning/info, ambiguity,
+  schema completeness, safety clarity, optional benchmark accuracy), with
+  an explicit not-a-scientific-metric disclaimer. Shown in the terminal
+  reporter.
+- SARIF 2.1.0 reporter (`reporters/sarif.py`) with a full rule catalogue
+  and per-finding results/locations.
+- Standalone, self-contained HTML report (`reporters/html.py` + Jinja2
+  template, embedded CSS, no external requests): score, findings by
+  severity, tool inventory, ambiguity pairs, and optional
+  benchmark/comparison/fix-suggestion sections.
+- `mcplint scan --format sarif|html` and a new global `--output PATH` to
+  also write the rendered report to a file.
+- `mcplint --version`.
+- Packaging: `LICENSE` (MIT), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+  `SECURITY.md`, GitHub issue/PR templates, `ci.yml`/`release.yml`
+  GitHub Actions, a documented example scan-and-upload-SARIF workflow,
+  `Dockerfile`, `.pre-commit-config.yaml`.
+- Full README rewrite: quickstart, real example output, architecture,
+  rule catalogue, ambiguity engine explanation, benchmark/compare/fix/CI/
+  plugin guides, limitations, roadmap, and a comparison section.
