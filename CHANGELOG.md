@@ -57,3 +57,19 @@
   "not implemented yet" error (Phase 5).
 - `examples/ambiguous_customer_server/customer-tools.evals.yaml`: the
   get/search/update/delete-customer confusion dataset required by the spec.
+- `AnthropicProvider`: verified against the real `anthropic` SDK (0.120.0);
+  API errors surface as a scored `ProviderResult.error`, not a crash;
+  illustrative per-model cost table. `OpenAIProvider` is a typed stub.
+  `--provider anthropic` now works end-to-end via `mcplint benchmark`.
+- `ComparisonReport` model + `compare/differ.py` (`diff_tool_names`,
+  `diff_tool_contracts`, `diff_findings`, `diff_ambiguity`, `diff_benchmarks`).
+- `mcplint compare --baseline --candidate [--dataset --min-accuracy-delta]`
+  CLI command with a Rich terminal reporter; fails CI (exit 1) when the
+  accuracy delta falls below the threshold.
+- `RewriteSuggestion` model + `fix/suggest.py`: deterministic, schema-derived
+  rewrite suggestions (output shape, enum/numeric constraints, destructive
+  warnings, tool-distinction placeholders, description truncation).
+  Markdown patch report reporter.
+- `mcplint fix --snapshot [--output PATH]` CLI command — never overwrites
+  source files; `--llm-provider` is recognized but explicitly rejected
+  until LLM-assisted rewriting is implemented.

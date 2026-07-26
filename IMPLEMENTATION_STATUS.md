@@ -72,9 +72,51 @@
   the live example server with `--provider fake` in CLI tests.
 - 119 tests passing, 95% coverage. Ruff/MyPy clean.
 
+## Completed (Phase 5)
+- `AnthropicProvider` (`benchmark/providers/anthropic_provider.py`): verified
+  against the real `anthropic` SDK (0.120.0) — `AsyncAnthropic.messages.create`
+  tool shape (`name`/`description`/`input_schema`), response content blocks
+  (`type == "tool_use"`, `.name`, `.input`), `usage.input_tokens`/
+  `output_tokens`. API exceptions are caught and surfaced as a scored
+  `ProviderResult.error`, never a crash. Illustrative (not authoritative)
+  per-model USD/1M-token pricing table for cost estimation. Tests mock the
+  client entirely (`pytest.importorskip("anthropic")` guards them) — zero
+  real API calls.
+- `OpenAIProvider` (`benchmark/providers/openai_provider.py`): typed stub,
+  raises `NotImplementedError` only when `.run()` is actually called — real
+  Phase-5-follow-up TODO, doesn't block Anthropic per spec.
+- `benchmark/providers/factory.py::create_provider` now fully wires `"fake"`,
+  `"anthropic"` (requires `--model`), and `"openai"` (stub).
+- `ComparisonReport`, `SchemaChange`, `DescriptionChange`, `AmbiguityScoreChange`
+  models. `compare/differ.py`: pure diff functions for tool add/remove,
+  schema/description changes, new/resolved findings (matched by rule+tool+
+  path+message identity), pairwise ambiguity score changes for tools common
+  to both snapshots, and benchmark metric deltas + per-case regressions.
+- `mcplint compare --baseline --candidate [--dataset --provider --model --runs
+  --min-accuracy-delta --format --output]` — re-runs a benchmark dataset
+  against both snapshots' tool lists (no live server needed) when `--dataset`
+  is given; exits 1 when the accuracy delta falls below
+  `--min-accuracy-delta`.
+- `RewriteSuggestion` model. `fix/suggest.py::build_suggestions`/
+  `suggest_for_tool`: deterministic, schema-derived clauses for
+  `missing-return-semantics` (describes outputSchema fields, or a generic
+  fallback when there's no schema), `undocumented-required-constraint`
+  (enum values / numeric bounds read directly from the parameter's JSON
+  Schema), `destructive-tool-without-warning`, `missing-tool-distinction`
+  (low-confidence placeholder naming the other tool), and
+  `excessive-description-length` (deterministic truncation at a sentence
+  boundary). `missing-tool-description`/`description-repeats-name`/
+  `vague-tool-description` get an honest `[TODO ...]` placeholder at
+  confidence 0.2 rather than fabricated prose — deterministic mode has no
+  LLM to invent real content.
+- `reporters/fix_markdown.py::render_fix_markdown` — the Markdown patch report.
+- `mcplint fix --snapshot [--output PATH] [--llm-provider ...]` — never
+  writes to source files (verified by a test); `--llm-provider` is accepted
+  as a flag but explicitly rejected with a clear error until LLM-assisted
+  rewriting exists (real TODO, not a silent stub).
+- 153 tests passing, 93% coverage. Ruff/MyPy clean.
+
 ## Incomplete
-- `fix`, `compare` commands (Phase 5).
-- Anthropic provider, `compare` command, `fix` suggestions (Phase 5).
 - Overall 0-100 explainable score (Phase 6, per spec p.7 — deferred from
   Phase 3 since it's listed under Phase 6 in the doc's phase breakdown and
   benefits from benchmark accuracy being available as an input).
@@ -86,6 +128,9 @@
   `semantic` extra) — interface allows for it (score is a weighted blend)
   but no embedding backend is wired in yet; deterministic token/name/schema
   similarity is the only mode. Not required for v1 per spec ("optional").
+- Real OpenAI benchmark provider (typed stub exists, raises `NotImplementedError`).
+- LLM-assisted rewriting for `mcplint fix` (`--llm-provider` flag exists and
+  is validated, but always rejected — no LLM call path implemented).
 
 ## Known limitations
 - `inspect`/`snapshot`/`scan` only support stdio transport.
@@ -130,11 +175,29 @@
 - `--config` defaults to `Path("mcplint.yaml")` (spec's documented default)
   and silently falls back to defaults when the file doesn't exist, matching
   `load_config`'s existing missing-path behavior from before the CLI was wired up.
+- Verified the real `anthropic` SDK (0.120.0) API surface before writing
+  `AnthropicProvider`, same discipline as Phase 1's `mcp` SDK verification:
+  checked `messages.create` signature, `ToolParam` fields, `Message`/
+  `ToolUseBlock`/`Usage` fields directly against the installed package.
+- `anthropic` added to the `dev` extra (not just the `anthropic` extra) so
+  CI exercises `AnthropicProvider`'s tests by default; those tests still use
+  `pytest.importorskip` so the suite degrades gracefully without it.
+- `compare`'s benchmark re-run uses each snapshot's own `tools` list rather
+  than requiring a live `--server` — matches the spec ("Compare two
+  snapshots and optionally run benchmark datasets against each") and means
+  `compare` never spawns a process.
+- `fix/suggest.py` re-derives constraint values (enum/min/max) from
+  `tool.parameters` via the finding's `json_path` rather than parsing
+  `Finding.evidence` text, so a rule's message wording can change without
+  breaking the fixer.
 
 ## Next task
-Phase 5: Anthropic provider adapter (structure OpenAI as a separate stub
-per spec, don't let it block Anthropic), `mcplint compare` (snapshot diff +
-optional benchmark re-run + `--min-accuracy-delta` CI threshold), and
-`mcplint fix` (deterministic rewrite suggestions first, optional
-LLM-assisted rewriting behind an explicit provider flag, Markdown patch
-report, never overwrite source files).
+Phase 6: SARIF 2.1.0 reporter (+ schema smoke test), standalone HTML report
+(Jinja2, no backend, embedded CSS), the explainable 0-100 overall score
+(documented weighting: critical/error findings, warnings, ambiguity, schema
+completeness, safety clarity, benchmark accuracy when available), packaging
+(LICENSE, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, GitHub issue/PR templates,
+GitHub Actions for lint/typecheck/test/build, Dockerfile, pre-commit config),
+and the full README rewrite (60-second quickstart, example output,
+architecture, rule catalogue, benchmark guide, CI guide, plugin guide,
+limitations, roadmap, comparison section).
