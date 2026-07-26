@@ -7,6 +7,7 @@ from io import StringIO
 from rich.console import Console
 from rich.table import Table
 
+from mcplint.core.score import compute_score
 from mcplint.models.findings import LintReport, Severity
 
 _SEVERITY_STYLE = {Severity.ERROR: "bold red", Severity.WARNING: "yellow", Severity.INFO: "cyan"}
@@ -17,13 +18,18 @@ def render_terminal(report: LintReport) -> str:
     console = Console(file=buffer, width=120, record=True)
 
     counts = report.count_by_severity()
+    score = compute_score(report)
     console.print(
         f"[bold]{report.server_name}[/bold] — "
         f"{len(report.findings)} finding(s) "
         f"({counts.get(Severity.ERROR, 0)} error, "
         f"{counts.get(Severity.WARNING, 0)} warning, "
-        f"{counts.get(Severity.INFO, 0)} info)"
+        f"{counts.get(Severity.INFO, 0)} info) — "
+        f"score: [bold]{score.total_score}/100[/bold]"
     )
+    if score.deductions:
+        for deduction in score.deductions:
+            console.print(f"  -{deduction.points_lost:.1f} {deduction.explanation}")
 
     if report.findings:
         table = Table()

@@ -16,8 +16,12 @@ from mcplint.mcp_client.persistence import load_snapshot
 from mcplint.mcp_client.session import collect_stdio_snapshot
 from mcplint.mcp_client.stdio import parse_command
 from mcplint.models.findings import LintReport, Severity
+from mcplint.reporters.html import render_html_report
 from mcplint.reporters.json_reporter import render_json
+from mcplint.reporters.sarif import render_sarif
 from mcplint.reporters.terminal import render_terminal
+
+_FORMATS = ("terminal", "json", "sarif", "html")
 
 console = Console()
 error_console = Console(stderr=True)
@@ -50,14 +54,19 @@ def scan_command(
     config: Annotated[
         Path, typer.Option("--config", help="Path to mcplint.yaml.")
     ] = Path("mcplint.yaml"),
+    output: Annotated[
+        Path | None, typer.Option("--output", help="Path to also write the report to.")
+    ] = None,
 ) -> None:
     if (server is None) == (snapshot is None):
         error_console.print(
             "[bold red]Exactly one of --server or --snapshot is required.[/bold red]"
         )
         raise typer.Exit(code=2)
-    if format not in ("terminal", "json"):
-        error_console.print(f"[bold red]Unknown format: {format}[/bold red]")
+    if format not in _FORMATS:
+        error_console.print(
+            f"[bold red]Unknown format: {format}. Supported: {', '.join(_FORMATS)}[/bold red]"
+        )
         raise typer.Exit(code=2)
     if fail_on not in ("error", "warning", "never"):
         error_console.print(f"[bold red]Unknown --fail-on: {fail_on}[/bold red]")
@@ -85,9 +94,20 @@ def scan_command(
     )
 
     if format == "json":
-        console.print(render_json(report))
+        rendered = render_json(report)
+        console.print(rendered)
+    elif format == "sarif":
+        rendered = render_sarif(report)
+        console.print(rendered)
+    elif format == "html":
+        rendered = render_html_report(server_snapshot, report)
+        console.print(f"[green]HTML report generated ({len(rendered)} bytes).[/green]")
     else:
-        console.print(render_terminal(report))
+        rendered = render_terminal(report)
+        console.print(rendered)
+
+    if output is not None:
+        output.write_text(rendered, encoding="utf-8")
 
     if _should_fail(report, fail_on):
         raise typer.Exit(code=1)

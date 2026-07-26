@@ -64,6 +64,40 @@ def test_scan_snapshot_json_format(tmp_path: Path) -> None:
     assert '"rule_id": "missing-tool-description"' in result.output
 
 
+def test_scan_snapshot_sarif_format(tmp_path: Path) -> None:
+    path = _bad_snapshot_path(tmp_path)
+    result = runner.invoke(
+        app, ["scan", "--snapshot", str(path), "--format", "sarif", "--fail-on", "never"]
+    )
+    assert result.exit_code == 0
+    assert '"version": "2.1.0"' in result.output
+    assert '"ruleId": "missing-tool-description"' in result.output
+
+
+def test_scan_snapshot_html_format_writes_output(tmp_path: Path) -> None:
+    path = _bad_snapshot_path(tmp_path)
+    output_path = tmp_path / "report.html"
+    result = runner.invoke(
+        app,
+        [
+            "scan",
+            "--snapshot",
+            str(path),
+            "--format",
+            "html",
+            "--fail-on",
+            "never",
+            "--output",
+            str(output_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert output_path.exists()
+    html = output_path.read_text()
+    assert html.strip().startswith("<!doctype html>")
+    assert "missing-tool-description" in html
+
+
 def test_scan_live_server_clean() -> None:
     result = runner.invoke(app, ["scan", "--server", f"{sys.executable} {GOOD_SERVER}"])
     assert result.exit_code == 0, result.output

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MCPLint report — {{ server_name }}</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    line-height: 1.5;
+    color: #1a1a1a;
+    background: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e6e6; background: #14161a; }
+    table { border-color: #333 !important; }
+    th, td { border-color: #333 !important; }
+    .card { background: #1c1f24 !important; border-color: #333 !important; }
+    code { background: #262a30 !important; }
+  }
+  h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.2rem; margin-top: 2.5rem; border-bottom: 2px solid currentColor; padding-bottom: 0.25rem; }
+  .meta { opacity: 0.7; font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .score {
+    display: inline-block;
+    font-size: 2.5rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    margin: 0.5rem 0;
+  }
+  .score.good { background: #d4f4dd; color: #1a7431; }
+  .score.ok { background: #fff2cc; color: #8a6d00; }
+  .score.bad { background: #fbdcdc; color: #a3231f; }
+  .disclaimer { font-size: 0.85rem; opacity: 0.7; font-style: italic; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; font-size: 0.92rem; }
+  th { background: rgba(127,127,127,0.1); }
+  .sev-error { color: #a3231f; font-weight: 600; }
+  .sev-warning { color: #8a6d00; font-weight: 600; }
+  .sev-info { color: #2563a8; font-weight: 600; }
+  .card { background: #f7f7f8; border: 1px solid #e2e2e2; border-radius: 0.5rem; padding: 1rem; margin: 0.75rem 0; }
+  code { background: rgba(127,127,127,0.15); padding: 0.1rem 0.3rem; border-radius: 0.25rem; }
+  .empty { opacity: 0.6; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>MCPLint report</h1>
+<div class="meta">
+  Server: <code>{{ server_name }}</code> &middot;
+  Generated: {{ generated_at }} &middot;
+  mcplint {{ mcplint_version }}
+</div>
+
+<div class="score {{ score_class }}">{{ score.total_score }}/100</div>
+<p class="disclaimer">{{ score.disclaimer }}</p>
+
+{% if score.deductions %}
+<table>
+  <tr><th>Category</th><th>Points lost</th><th>Why</th></tr>
+  {% for d in score.deductions %}
+  <tr><td>{{ d.category }}</td><td>-{{ "%.1f"|format(d.points_lost) }}</td><td>{{ d.explanation }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>Findings by severity ({{ findings|length }} total)</h2>
+{% if findings %}
+<table>
+  <tr><th>Severity</th><th>Rule</th><th>Tool</th><th>Message</th><th>Confidence</th></tr>
+  {% for f in findings %}
+  <tr>
+    <td class="sev-{{ f.severity }}">{{ f.severity }}</td>
+    <td><code>{{ f.rule_id }}</code></td>
+    <td>{{ f.location.tool_name }}</td>
+    <td>{{ f.message }}</td>
+    <td>{{ "%.2f"|format(f.confidence) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No findings.</p>
+{% endif %}
+
+<h2>Tool inventory ({{ tools|length }} tools)</h2>
+<table>
+  <tr><th>Name</th><th>Description</th><th>Params</th><th>Destructive</th><th>Read-only</th></tr>
+  {% for t in tools %}
+  <tr>
+    <td><code>{{ t.name }}</code></td>
+    <td>{{ t.description or "—" }}</td>
+    <td>{{ t.parameters|length }}</td>
+    <td>{{ "yes" if t.annotations.destructive_hint else "" }}</td>
+    <td>{{ "yes" if t.annotations.read_only_hint else "" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Ambiguity pairs ({{ ambiguity_pairs|length }})</h2>
+{% if ambiguity_pairs %}
+<table>
+  <tr><th>Tool A</th><th>Tool B</th><th>Score</th><th>Evidence</th></tr>
+  {% for pair in ambiguity_pairs %}
+  <tr>
+    <td>{{ pair.tool_a }}</td>
+    <td>{{ pair.tool_b }}</td>
+    <td>{{ "%.2f"|format(pair.score) }}</td>
+    <td>
+      {% if pair.evidence.shared_verbs %}shared verbs: {{ pair.evidence.shared_verbs|join(", ") }}<br>{% endif %}
+      {% if pair.evidence.overlapping_parameters %}overlapping params: {{ pair.evidence.overlapping_parameters|join(", ") }}<br>{% endif %}
+      {% if pair.evidence.absent_exact_vs_search_distinction %}missing exact-vs-search distinction<br>{% endif %}
+      {% if pair.evidence.absent_one_vs_many_distinction %}missing one-vs-many distinction<br>{% endif %}
+      {% if pair.evidence.absent_read_vs_write_distinction %}missing read-vs-write distinction{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No ambiguous pairs above the threshold.</p>
+{% endif %}
+
+{% if benchmark %}
+<h2>Benchmark: {{ benchmark.dataset_name }}</h2>
+<div class="card">
+  <p>{{ benchmark.provider }}/{{ benchmark.model }} &middot; {{ benchmark.runs_per_case }} runs/case &middot; {{ benchmark.trials|length }} trials</p>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Exact tool-selection accuracy</td><td>{{ "%.1f"|format(benchmark.exact_tool_selection_accuracy * 100) }}%</td></tr>
+    <tr><td>Valid-argument rate</td><td>{{ "%.1f"|format(benchmark.valid_argument_rate * 100) }}%</td></tr>
+    <tr><td>Required-argument accuracy</td><td>{{ "%.1f"|format(benchmark.required_argument_accuracy * 100) }}%</td></tr>
+    <tr><td>Forbidden-tool invocation rate</td><td>{{ "%.1f"|format(benchmark.forbidden_tool_invocation_rate * 100) }}%</td></tr>
+    <tr><td>No-tool rate</td><td>{{ "%.1f"|format(benchmark.no_tool_rate * 100) }}%</td></tr>
+    <tr><td>Mean / P95 latency</td><td>{{ "%.0f"|format(benchmark.mean_latency_ms) }} / {{ "%.0f"|format(benchmark.p95_latency_ms) }} ms</td></tr>
+    {% if benchmark.total_estimated_cost is not none %}
+    <tr><td>Total estimated cost</td><td>${{ "%.4f"|format(benchmark.total_estimated_cost) }}</td></tr>
+    {% endif %}
+  </table>
+</div>
+{% endif %}
+
+{% if comparison %}
+<h2>Before &amp; after: {{ comparison.baseline_server_name }} &rarr; {{ comparison.candidate_server_name }}</h2>
+<div class="card">
+  <p>
+    Added tools: {{ comparison.added_tools|join(", ") if comparison.added_tools else "none" }}<br>
+    Removed tools: {{ comparison.removed_tools|join(", ") if comparison.removed_tools else "none" }}<br>
+    Findings: {{ comparison.new_findings|length }} new, {{ comparison.resolved_findings|length }} resolved
+  </p>
+  {% if comparison.benchmark_dataset_name %}
+  <p>
+    Benchmark accuracy: {{ "%.1f"|format((comparison.baseline_accuracy or 0) * 100) }}% &rarr;
+    {{ "%.1f"|format((comparison.candidate_accuracy or 0) * 100) }}%
+    (delta {{ "%+.1f"|format((comparison.benchmark_accuracy_delta or 0) * 100) }}%)
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if suggestions %}
+<h2>Remediation suggestions ({{ suggestions|length }})</h2>
+{% for s in suggestions %}
+<div class="card">
+  <strong><code>{{ s.tool_name }}</code></strong> — confidence {{ "%.2f"|format(s.confidence) }}<br>
+  Resolves: {{ s.resolved_rule_ids|join(", ") }}<br>
+  <blockquote>{{ s.proposed_description }}</blockquote>
+  <em>{{ s.explanation }}</em>
+</div>
+{% endfor %}
+{% endif %}
+
+</body>
+</html>
