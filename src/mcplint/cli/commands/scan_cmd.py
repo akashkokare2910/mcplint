@@ -9,6 +9,7 @@ import anyio
 import typer
 from rich.console import Console
 
+from mcplint.config.loader import ConfigError, load_config
 from mcplint.core.engine import lint_snapshot
 from mcplint.core.registry import RuleRegistry
 from mcplint.mcp_client.persistence import load_snapshot
@@ -46,6 +47,9 @@ def scan_command(
     fail_on: Annotated[
         str, typer.Option("--fail-on", help="Minimum severity that fails the command.")
     ] = "error",
+    config: Annotated[
+        Path, typer.Option("--config", help="Path to mcplint.yaml.")
+    ] = Path("mcplint.yaml"),
 ) -> None:
     if (server is None) == (snapshot is None):
         error_console.print(
@@ -60,6 +64,12 @@ def scan_command(
         raise typer.Exit(code=2)
 
     try:
+        mcplint_config = load_config(config)
+    except ConfigError as exc:
+        error_console.print(f"[bold red]{exc}[/bold red]")
+        raise typer.Exit(code=2) from exc
+
+    try:
         if snapshot is not None:
             server_snapshot = load_snapshot(snapshot)
         else:
@@ -70,7 +80,9 @@ def scan_command(
         error_console.print(f"[bold red]Failed to load server contract:[/bold red] {exc}")
         raise typer.Exit(code=1) from exc
 
-    report = lint_snapshot(server_snapshot, RuleRegistry.with_builtin_rules())
+    report = lint_snapshot(
+        server_snapshot, RuleRegistry.with_builtin_rules(mcplint_config), mcplint_config
+    )
 
     if format == "json":
         console.print(render_json(report))

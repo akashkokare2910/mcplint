@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from importlib.metadata import entry_points
+from typing import TYPE_CHECKING
 
 from mcplint.core.rules.base import Rule
+
+if TYPE_CHECKING:
+    from mcplint.config.schema import MCPLintConfig
 
 
 class RuleRegistry:
@@ -28,10 +32,21 @@ class RuleRegistry:
             self.register(rule_cls())
 
     @classmethod
-    def with_builtin_rules(cls) -> RuleRegistry:
+    def with_builtin_rules(cls, config: MCPLintConfig | None = None) -> RuleRegistry:
+        from mcplint.core.rules.ambiguity_rules import (
+            AmbiguousToolOverlapRule,
+            MissingToolDistinctionRule,
+        )
         from mcplint.core.rules.builtin import BUILTIN_RULES
+        from mcplint.core.rules.completeness_rules import ExcessiveDescriptionLengthRule
 
         registry = cls()
         for rule_cls in BUILTIN_RULES:
-            registry.register(rule_cls())
+            rule = rule_cls()
+            if config is not None:
+                if isinstance(rule, AmbiguousToolOverlapRule | MissingToolDistinctionRule):
+                    rule.threshold = config.thresholds.ambiguity
+                elif isinstance(rule, ExcessiveDescriptionLengthRule):
+                    rule.max_characters = config.thresholds.max_description_characters
+            registry.register(rule)
         return registry
