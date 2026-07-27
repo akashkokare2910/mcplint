@@ -9,6 +9,7 @@ import typer
 from mcplint.__about__ import __version__
 from mcplint.cli.commands.benchmark_cmd import benchmark_command
 from mcplint.cli.commands.compare_cmd import compare_command
+from mcplint.cli.commands.confusion_cmd import confusion_command
 from mcplint.cli.commands.contract_cmd import app as contract_app
 from mcplint.cli.commands.fix_cmd import fix_command
 from mcplint.cli.commands.inspect_cmd import inspect_command
@@ -44,6 +45,7 @@ app.command("rules")(rules_command)
 app.command("benchmark")(benchmark_command)
 app.command("compare")(compare_command)
 app.command("fix")(fix_command)
+app.command("confusion")(confusion_command)
 app.add_typer(contract_app)
 
 
