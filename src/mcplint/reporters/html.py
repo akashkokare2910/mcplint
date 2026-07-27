@@ -1,4 +1,4 @@
-"""Render a standalone HTML report — no backend, embedded CSS, no external requests."""
+"""Render a standalone HTML report: no backend, embedded CSS, no external requests."""
 
 from __future__ import annotations
 

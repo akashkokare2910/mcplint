@@ -1,4 +1,4 @@
-"""`mcplint rules` — list every built-in rule."""
+"""`mcplint rules`: list every built-in rule."""
 
 from __future__ import annotations
 

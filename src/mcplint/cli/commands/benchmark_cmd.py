@@ -1,4 +1,4 @@
-"""`mcplint benchmark` — run a benchmark dataset against a live MCP server."""
+"""`mcplint benchmark`: run a benchmark dataset against a live MCP server."""
 
 from __future__ import annotations
 

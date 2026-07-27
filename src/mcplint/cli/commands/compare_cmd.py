@@ -1,4 +1,4 @@
-"""`mcplint compare` — diff two snapshots and optionally re-run a benchmark against both."""
+"""`mcplint compare`: diff two snapshots and optionally re-run a benchmark against both."""
 
 from __future__ import annotations
 

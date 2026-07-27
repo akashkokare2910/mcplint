@@ -2,14 +2,14 @@ name: Release
 
 # Production publishing happens ONLY from an explicit `vX.Y.Z` tag push.
 # Nothing in ci.yml (which runs on every PR and every push to main) has
-# any path to PyPI credentials or release-creation permissions — only this
+# any path to PyPI credentials or release-creation permissions: only this
 # workflow does, and only after a maintainer pushes a tag (tag creation
 # requires write access to the repo; it cannot be triggered by an
 # untrusted pull request).
 on:
   push:
     tags:
-      - "v*.*.*" # e.g. v0.1.0 — the build job's version-match step rejects anything non-semver
+      - "v*.*.*" # e.g. v0.1.0: the build job's version-match step rejects anything non-semver
 
 permissions:
   contents: read

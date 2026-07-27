@@ -1,4 +1,4 @@
-"""`mcplint scan` — lint a live MCP server or a saved snapshot."""
+"""`mcplint scan`: lint a live MCP server or a saved snapshot."""
 
 from __future__ import annotations
 

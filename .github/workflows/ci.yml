@@ -7,7 +7,7 @@ on:
 
 # Least privilege by default; no job in this workflow ever needs write
 # access to the repo, and nothing here ever touches PyPI or creates a
-# release — that only happens from release.yml, triggered by a tag push.
+# release: that only happens from release.yml, triggered by a tag push.
 permissions:
   contents: read
 
@@ -89,7 +89,7 @@ jobs:
       - name: CLI smoke tests
         # Activate the venv (rather than calling mcplint by full path) so the
         # `python examples/good_server/server.py` subprocess mcplint spawns
-        # also resolves to this venv's python — which has `mcp` installed as
+        # also resolves to this venv's python: which has `mcp` installed as
         # mcplint's own runtime dependency. Calling the binary by full path
         # would leave `python` on PATH pointing at the bare system
         # interpreter, which doesn't have `mcp` installed, and the spawned

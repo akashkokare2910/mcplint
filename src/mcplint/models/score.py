@@ -1,5 +1,5 @@
-"""The explainable 0-100 overall score. Not a scientifically validated metric —
-a weighted, documented heuristic meant to make regressions visible at a glance.
+"""The explainable 0-100 overall score: not a scientifically validated metric,
+but a weighted, documented heuristic meant to make regressions visible at a glance.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """Resolves a --provider/--model CLI selection to a ToolCallingProvider instance.
 
-"fake" and "anthropic" are implemented. "openai" is a typed stub — see
-`openai_provider.py` — that raises NotImplementedError only when actually
+"fake" and "anthropic" are implemented. "openai" is a typed stub: see
+`openai_provider.py`: that raises NotImplementedError only when actually
 invoked, per the spec's "don't let OpenAI delay Anthropic" guidance.
 """
 

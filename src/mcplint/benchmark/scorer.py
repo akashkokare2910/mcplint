@@ -1,4 +1,4 @@
-"""Deterministic scoring of benchmark trials. No LLM judge — every metric here
+"""Deterministic scoring of benchmark trials. No LLM judge: every metric here
 is computed from exact tool-name/argument comparison and JSON Schema validation.
 """
 

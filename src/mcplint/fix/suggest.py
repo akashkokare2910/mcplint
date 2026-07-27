@@ -1,5 +1,5 @@
 """Deterministic rewrite suggestions built directly from JSON Schema and
-annotations — no LLM. Each fixable finding contributes one clause appended
+annotations: no LLM. Each fixable finding contributes one clause appended
 to the tool's existing description (or, for excessive-description-length,
 a deterministic truncation). Purely semantic issues (vague wording, a
 description that just restates the name, or a missing description) cannot
@@ -121,7 +121,7 @@ def suggest_for_tool(tool: ToolContract, findings: list[Finding]) -> RewriteSugg
             other = _other_tool_name(finding.message, tool.name)
             if other:
                 clauses.append(
-                    f"See {other} for a related but different operation — check both "
+                    f"See {other} for a related but different operation: check both "
                     "descriptions before choosing."
                 )
                 resolved_rule_ids.append(rule_id)
@@ -140,7 +140,7 @@ def suggest_for_tool(tool: ToolContract, findings: list[Finding]) -> RewriteSugg
                 clauses.append(placeholder)
                 resolved_rule_ids.append(rule_id)
                 explanations.append(
-                    "Flagged for manual or LLM-assisted rewriting — deterministic mode "
+                    "Flagged for manual or LLM-assisted rewriting: deterministic mode "
                     "cannot fabricate semantic content."
                 )
                 confidences.append(0.2)

@@ -16,7 +16,7 @@ from mcplint.models.contracts import ToolContract
 if TYPE_CHECKING:
     import anthropic
 
-# Illustrative only — not authoritative pricing. USD per 1M tokens.
+# Illustrative only: not authoritative pricing. USD per 1M tokens.
 _PRICING_PER_MILLION_TOKENS: dict[str, tuple[float, float]] = {
     "claude-sonnet-5": (3.0, 15.0),
     "claude-opus-5": (15.0, 75.0),

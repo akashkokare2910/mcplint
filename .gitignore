@@ -9,3 +9,7 @@ dist/
 build/
 .coverage
 htmlcov/
+
+# Local agent/assistant scratch artifacts: never part of the published project
+docs/superpowers/
+.claude/

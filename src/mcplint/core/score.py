@@ -18,7 +18,7 @@ clamped to [0, 100]):
   - benchmark accuracy (only when a BenchmarkResult is supplied): up to 15
     points, proportional to (1 - exact_tool_selection_accuracy).
 
-These weights are a documented, adjustable heuristic — not a scientifically
+These weights are a documented, adjustable heuristic: not a scientifically
 derived formula. They exist so a regression in any one category is visible
 without being able to silently zero out the score.
 """

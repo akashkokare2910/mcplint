@@ -1,4 +1,4 @@
-"""`mcplint snapshot` — connect to an MCP server and persist its contract as JSON."""
+"""`mcplint snapshot`: connect to an MCP server and persist its contract as JSON."""
 
 from __future__ import annotations
 

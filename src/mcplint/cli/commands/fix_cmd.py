@@ -1,4 +1,4 @@
-"""`mcplint fix` — propose deterministic rewrite suggestions as a Markdown patch report.
+"""`mcplint fix`: propose deterministic rewrite suggestions as a Markdown patch report.
 
 Never writes to the MCP server's source files. Only ever writes the patch
 report itself, and only when --output is given.

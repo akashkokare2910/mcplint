@@ -1,6 +1,6 @@
 # Example workflow for MCPLint users: gate a PR on MCP tool-contract quality.
 #
-# This is a *documented example*, not part of MCPLint's own CI — copy it into
+# This is a *documented example*, not part of MCPLint's own CI: copy it into
 # your MCP server's repo and adjust the "Start the MCP server" step. It:
 #   1. Installs MCPLint
 #   2. Invokes the local MCP server
@@ -8,13 +8,13 @@
 #   4. Uploads SARIF to GitHub code scanning
 #   5. Fails the job on error-severity findings
 #
-# No custom JavaScript Action is required — this composite-style workflow
+# No custom JavaScript Action is required: this composite-style workflow
 # (plain steps) is sufficient, per MCPLint's own security stance of never
 # running a hosted service that executes arbitrary server commands.
 name: mcplint-scan-example
 
 on:
-  workflow_dispatch: # example only — trigger manually; adapt `on:` for real use
+  workflow_dispatch: # example only: trigger manually; adapt `on:` for real use
 
 jobs:
   scan:
@@ -33,7 +33,7 @@ jobs:
         run: pip install mcplint-cli
 
       # 2 & 3. Invoke the local MCP server and run the scanner.
-      # Replace the --server command with however your server is started —
+      # Replace the --server command with however your server is started:
       # `python server.py`, `node server.js`, a built binary, etc.
       - name: Scan the MCP server
         run: |

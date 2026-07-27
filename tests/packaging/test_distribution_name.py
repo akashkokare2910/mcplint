@@ -70,7 +70,7 @@ def _install_and_verify_runtime_identity(wheel_path: Path, venv_dir: Path) -> No
         timeout=120,
     )
 
-    # The import package is `mcplint`, not `mcplint_cli` — the distribution
+    # The import package is `mcplint`, not `mcplint_cli`: the distribution
     # name never needs to be importable.
     import_result = subprocess.run(
         [str(venv_python), "-c", "import mcplint; print(mcplint.__version__)"],

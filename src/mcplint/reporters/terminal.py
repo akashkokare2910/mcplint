@@ -20,12 +20,12 @@ def render_terminal(report: LintReport) -> str:
     counts = report.count_by_severity()
     score = compute_score(report)
     console.print(
-        f"[bold]{report.server_name}[/bold] — "
+        f"[bold]{report.server_name}[/bold]: "
         f"{len(report.findings)} finding(s) "
         f"({counts.get(Severity.ERROR, 0)} error, "
         f"{counts.get(Severity.WARNING, 0)} warning, "
-        f"{counts.get(Severity.INFO, 0)} info) — "
-        f"score: [bold]{score.total_score}/100[/bold]"
+        f"{counts.get(Severity.INFO, 0)} info), "
+        f"score [bold]{score.total_score}/100[/bold]"
     )
     if score.deductions:
         for deduction in score.deductions:

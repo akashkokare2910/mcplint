@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MCPLint report — {{ server_name }}</title>
+<title>MCPLint report: {{ server_name }}</title>
 <style>
   :root { color-scheme: light dark; }
   body {
@@ -92,7 +92,7 @@
   {% for t in tools %}
   <tr>
     <td><code>{{ t.name }}</code></td>
-    <td>{{ t.description or "—" }}</td>
+    <td>{{ t.description or "(none)" }}</td>
     <td>{{ t.parameters|length }}</td>
     <td>{{ "yes" if t.annotations.destructive_hint else "" }}</td>
     <td>{{ "yes" if t.annotations.read_only_hint else "" }}</td>
@@ -164,7 +164,7 @@
 <h2>Remediation suggestions ({{ suggestions|length }})</h2>
 {% for s in suggestions %}
 <div class="card">
-  <strong><code>{{ s.tool_name }}</code></strong> — confidence {{ "%.2f"|format(s.confidence) }}<br>
+  <strong><code>{{ s.tool_name }}</code></strong>, confidence {{ "%.2f"|format(s.confidence) }}<br>
   Resolves: {{ s.resolved_rule_ids|join(", ") }}<br>
   <blockquote>{{ s.proposed_description }}</blockquote>
   <em>{{ s.explanation }}</em>

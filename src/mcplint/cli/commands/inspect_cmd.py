@@ -1,4 +1,4 @@
-"""`mcplint inspect` — connect to an MCP server and print its tool contracts."""
+"""`mcplint inspect`: connect to an MCP server and print its tool contracts."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ def inspect_command(
     for tool in snapshot.tools:
         table.add_row(
             tool.name,
-            tool.description or "[dim]—[/dim]",
+            tool.description or "[dim](none)[/dim]",
             str(len(tool.parameters)),
             "yes" if tool.annotations.destructive_hint else "",
         )

@@ -1,4 +1,4 @@
-"""Render RewriteSuggestions as a Markdown patch report — never applied automatically."""
+"""Render RewriteSuggestions as a Markdown patch report: never applied automatically."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ def render_fix_markdown(server_name: str, suggestions: list[RewriteSuggestion]) 
     lines = [f"# MCPLint fix suggestions for `{server_name}`", ""]
 
     if not suggestions:
-        lines.append("No actionable suggestions — nothing to fix.")
+        lines.append("No actionable suggestions: nothing to fix.")
         return "\n".join(lines) + "\n"
 
     lines.append(
         "These are proposed changes only. MCPLint never overwrites source files "
-        "automatically — review and apply them by hand."
+        "automatically: review and apply them by hand."
     )
     lines.append("")
 
