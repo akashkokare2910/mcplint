@@ -24,7 +24,7 @@ WRITE_VERBS = frozenset(
         "patch",
     }
 )
-_DESTRUCTIVE_WARNING_HINTS = re.compile(
+DESTRUCTIVE_WARNING_HINTS = re.compile(
     r"\b(permanent|permanently|irreversible|cannot be undone|cannot be reversed|destructive)\b",
     re.IGNORECASE,
 )
@@ -85,7 +85,7 @@ class DestructiveToolWithoutWarningRule(Rule):
     def check(self, tool: ToolContract, context: RuleContext) -> list[Finding]:
         if not tool.annotations.destructive_hint:
             return []
-        if tool.description and _DESTRUCTIVE_WARNING_HINTS.search(tool.description):
+        if tool.description and DESTRUCTIVE_WARNING_HINTS.search(tool.description):
             return []
         return [
             Finding(

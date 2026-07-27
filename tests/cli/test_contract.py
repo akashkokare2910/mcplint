@@ -209,3 +209,108 @@ tools:
     assert "No 'prefer_over' entries" in result.output
     raw = yaml.safe_load(output_path.read_text())
     assert raw["cases"] == []
+
+
+def _dataset_path(tmp_path: Path) -> Path:
+    dataset_path = tmp_path / "adversarial.evals.yaml"
+    dataset_path.write_text(
+        """
+name: customer-server-adversarial
+version: "1"
+cases:
+  - id: prefer-get_customer-over-search_customers
+    prompt: A known immutable customer ID is supplied. Decide which tool to use.
+    expected:
+      tool: get_customer
+      forbidden_tools:
+        - search_customers
+""",
+        encoding="utf-8",
+    )
+    return dataset_path
+
+
+def test_contract_mutate_reports_survived_mutations_with_fake_provider(tmp_path: Path) -> None:
+    contract_path = tmp_path / "mcplint.contract.yaml"
+    contract_path.write_text(VALID_CONTRACT, encoding="utf-8")
+    snapshot_path = _snapshot_path(tmp_path)
+    dataset_path = _dataset_path(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "contract",
+            "mutate",
+            str(contract_path),
+            "--snapshot",
+            str(snapshot_path),
+            "--dataset",
+            str(dataset_path),
+            "--provider",
+            "fake",
+            "--runs",
+            "1",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "SURVIVED" in result.output
+
+
+def test_contract_mutate_fails_below_min_kill_rate(tmp_path: Path) -> None:
+    contract_path = tmp_path / "mcplint.contract.yaml"
+    contract_path.write_text(VALID_CONTRACT, encoding="utf-8")
+    snapshot_path = _snapshot_path(tmp_path)
+    dataset_path = _dataset_path(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "contract",
+            "mutate",
+            str(contract_path),
+            "--snapshot",
+            str(snapshot_path),
+            "--dataset",
+            str(dataset_path),
+            "--provider",
+            "fake",
+            "--runs",
+            "1",
+            "--min-kill-rate",
+            "1.0",
+        ],
+    )
+    assert result.exit_code == 1
+    assert "below --min-kill-rate" in result.output
+
+
+def test_contract_mutate_requires_server_or_snapshot(tmp_path: Path) -> None:
+    contract_path = tmp_path / "mcplint.contract.yaml"
+    contract_path.write_text(VALID_CONTRACT, encoding="utf-8")
+    dataset_path = _dataset_path(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["contract", "mutate", str(contract_path), "--dataset", str(dataset_path)],
+    )
+    assert result.exit_code == 2
+
+
+def test_contract_mutate_missing_dataset_file(tmp_path: Path) -> None:
+    contract_path = tmp_path / "mcplint.contract.yaml"
+    contract_path.write_text(VALID_CONTRACT, encoding="utf-8")
+    snapshot_path = _snapshot_path(tmp_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "contract",
+            "mutate",
+            str(contract_path),
+            "--snapshot",
+            str(snapshot_path),
+            "--dataset",
+            str(tmp_path / "missing.evals.yaml"),
+        ],
+    )
+    assert result.exit_code == 2
