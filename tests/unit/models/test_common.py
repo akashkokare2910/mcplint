@@ -1,12 +1,13 @@
 from datetime import UTC, datetime
 
+from mcplint.__about__ import __version__
 from mcplint.models.common import ArtifactMetadata
 
 
 def test_create_fills_version_and_timestamp() -> None:
     meta = ArtifactMetadata.create(schema_version="1.0")
     assert meta.schema_version == "1.0"
-    assert meta.mcplint_version == "0.1.0"
+    assert meta.mcplint_version == __version__
     assert isinstance(meta.generated_at, datetime)
     assert meta.generated_at.tzinfo is UTC
 

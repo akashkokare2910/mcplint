@@ -18,6 +18,13 @@ agent: two tools whose descriptions overlap, a destructive action with no
 warning, a required parameter whose constraints are never mentioned in prose.
 JSON Schema validation does not catch any of that. MCPLint does.
 
+ContractLab extends this from single-run linting to ongoing behavioral
+reliability: a `mcplint.contract.yaml` describing what should be true,
+adversarial benchmark generation from that contract, mutation testing to
+check descriptions actually carry the distinctions they claim to, and
+confusion analysis that checks the static ambiguity engine against what a
+model actually confused. See [ContractLab](#contractlab).
+
 ## Quick start
 
 ```bash
@@ -66,6 +73,9 @@ core/         Rule ABC, RuleRegistry, and the lint_snapshot() engine.
 config/       mcplint.yaml loading (severity overrides, thresholds, ignores).
 benchmark/    Dataset format, ToolCallingProvider protocol, scorer, runner.
                 providers/  fake (tests), anthropic, openai (stub).
+                adversarial.py  Generates a benchmark dataset from a contract's prefer_over rules.
+contract/     mcplint.contract.yaml loading and validation against a snapshot.
+mutation/     Description mutators and the mutation-testing engine.
 compare/      Pure diff functions between two snapshots, reports, or benchmarks.
 fix/          Deterministic rewrite suggestions derived from schema and annotations.
 models/       Every persisted artifact as a typed Pydantic model.
@@ -221,6 +231,70 @@ your source files, only a Markdown patch report you review by hand. Purely
 semantic issues, such as a vague description or one that just restates the
 name, get an honest low-confidence placeholder rather than fabricated prose,
 since the deterministic engine has no LLM to invent real content.
+
+## ContractLab
+
+Linting catches description and schema problems on individual tools. The
+benchmark measures whether a model picks the right tool for a prompt.
+ContractLab goes one level further: it tests whether the tool set stays
+behaviorally reliable as descriptions and models change over time.
+
+It starts with a behavioral contract, declared once per server:
+
+```yaml
+# mcplint.contract.yaml
+schema_version: "1"
+name: customer-server
+
+tools:
+  get_customer:
+    intent:
+      operation: read
+      cardinality: one
+      matching: exact
+      side_effects: none
+      risk: low
+    requires:
+      - customer_id
+    prefer_over:
+      search_customers:
+        when: A known, exact customer ID is supplied.
+```
+
+```bash
+# Check the contract still matches the live server's tool list.
+mcplint contract validate mcplint.contract.yaml --server "python my_server.py"
+
+# Turn prefer_over rules into an adversarial benchmark dataset, in the
+# same format mcplint benchmark already understands.
+mcplint contract generate-benchmark mcplint.contract.yaml \
+  --server "python my_server.py" --output adversarial.evals.yaml
+
+# Mutation-test tool descriptions: strip a destructive warning, strip
+# exact-vs-search language, truncate to vague, and see whether the
+# benchmark accuracy actually drops. A description too weak to matter
+# will show its mutations "surviving".
+mcplint contract mutate mcplint.contract.yaml \
+  --server "python my_server.py" --dataset adversarial.evals.yaml \
+  --provider fake --min-kill-rate 0.8
+
+# After running a benchmark and saving its result, cross-reference the
+# static ambiguity engine against what the model actually confused.
+mcplint benchmark evals.yaml --server "python my_server.py" \
+  --provider fake --format json --output result.json
+mcplint confusion --result result.json --dataset evals.yaml \
+  --snapshot before.json --fail-on-surprising
+```
+
+Each ContractLab command is a composition over the existing snapshot and
+benchmark primitives, not new execution machinery: adversarial generation
+outputs an unmodified `BenchmarkDataset`, and mutation testing calls the
+same `run_benchmark` used by `mcplint benchmark` on a mutated snapshot.
+`confusion`'s "surprising" pairs (an observed confusion the ambiguity
+engine did not predict) are the most actionable signal: they mean the
+static heuristics have a real gap, not just that the model is a bit
+inconsistent. See `examples/ambiguous_customer_server/mcplint.contract.yaml`
+for a complete worked example.
 
 ## CI guide
 
