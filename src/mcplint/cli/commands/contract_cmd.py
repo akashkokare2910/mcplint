@@ -13,8 +13,10 @@ from typing import Annotated
 
 import anyio
 import typer
+import yaml
 from rich.console import Console
 
+from mcplint.benchmark.adversarial import generate_adversarial_dataset
 from mcplint.contract.loader import ContractError, load_contract
 from mcplint.contract.validator import validate_contract_against_snapshot
 from mcplint.mcp_client.persistence import load_snapshot
@@ -70,3 +72,44 @@ def validate_command(
 
     if issues:
         raise typer.Exit(code=1)
+
+
+@app.command("generate-benchmark")
+def generate_benchmark_command(
+    contract_path: Annotated[Path, typer.Argument(help="Path to mcplint.contract.yaml.")],
+    server: Annotated[
+        str | None, typer.Option("--server", help="Command line to launch the MCP server.")
+    ] = None,
+    snapshot: Annotated[
+        Path | None, typer.Option("--snapshot", help="Path to a saved snapshot JSON file.")
+    ] = None,
+    output: Annotated[
+        Path,
+        typer.Option("--output", help="Path to write the generated benchmark dataset YAML to."),
+    ] = Path("adversarial.evals.yaml"),
+) -> None:
+    try:
+        contract = load_contract(contract_path)
+    except ContractError as exc:
+        error_console.print(f"[bold red]{exc}[/bold red]")
+        raise typer.Exit(code=2) from exc
+
+    server_snapshot = _resolve_snapshot(server, snapshot)
+
+    issues = validate_contract_against_snapshot(contract, server_snapshot)
+    for issue in issues:
+        error_console.print(
+            f"[yellow]Warning:[/yellow] {issue.tool_name}: {issue.message} "
+            "(skipping any case that would depend on it)"
+        )
+
+    dataset = generate_adversarial_dataset(contract, server_snapshot)
+    if not dataset.cases:
+        error_console.print(
+            "[yellow]No 'prefer_over' entries produced a usable case "
+            "(check the contract has at least one, and both tools exist in the snapshot).[/yellow]"
+        )
+
+    dataset_yaml = yaml.safe_dump(dataset.model_dump(mode="json"), sort_keys=False)
+    output.write_text(dataset_yaml, encoding="utf-8")
+    console.print(f"[green]Generated {len(dataset.cases)} adversarial case(s) to {output}[/green]")

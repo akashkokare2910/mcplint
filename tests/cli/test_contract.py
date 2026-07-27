@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+import yaml
 from typer.testing import CliRunner
 
 from mcplint.cli.main import app
@@ -124,3 +126,86 @@ def test_contract_validate_missing_contract_file(tmp_path: Path) -> None:
         ],
     )
     assert result.exit_code == 2
+
+
+def test_contract_generate_benchmark_writes_dataset(tmp_path: Path) -> None:
+    contract_path = tmp_path / "mcplint.contract.yaml"
+    contract_path.write_text(VALID_CONTRACT, encoding="utf-8")
+    snapshot_path = _snapshot_path(tmp_path)
+    output_path = tmp_path / "adversarial.evals.yaml"
+
+    result = runner.invoke(
+        app,
+        [
+            "contract",
+            "generate-benchmark",
+            str(contract_path),
+            "--snapshot",
+            str(snapshot_path),
+            "--output",
+            str(output_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "Generated 1 adversarial case(s)" in result.output
+    assert output_path.exists()
+
+    raw = yaml.safe_load(output_path.read_text())
+    assert raw["name"] == "customer-server-adversarial"
+    assert len(raw["cases"]) == 1
+    assert raw["cases"][0]["expected"]["tool"] == "get_customer"
+    assert raw["cases"][0]["expected"]["forbidden_tools"] == ["search_customers"]
+
+
+def test_contract_generate_benchmark_default_output_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    contract_path = tmp_path / "mcplint.contract.yaml"
+    contract_path.write_text(VALID_CONTRACT, encoding="utf-8")
+    snapshot_path = _snapshot_path(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["contract", "generate-benchmark", str(contract_path), "--snapshot", str(snapshot_path)],
+    )
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "adversarial.evals.yaml").exists()
+
+
+def test_contract_generate_benchmark_no_prefer_over_warns(tmp_path: Path) -> None:
+    contract_path = tmp_path / "mcplint.contract.yaml"
+    contract_path.write_text(
+        """
+schema_version: "1"
+name: customer-server
+tools:
+  get_customer:
+    intent:
+      operation: read
+      cardinality: one
+      matching: exact
+      side_effects: none
+      risk: low
+""",
+        encoding="utf-8",
+    )
+    snapshot_path = _snapshot_path(tmp_path)
+    output_path = tmp_path / "adversarial.evals.yaml"
+
+    result = runner.invoke(
+        app,
+        [
+            "contract",
+            "generate-benchmark",
+            str(contract_path),
+            "--snapshot",
+            str(snapshot_path),
+            "--output",
+            str(output_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "No 'prefer_over' entries" in result.output
+    raw = yaml.safe_load(output_path.read_text())
+    assert raw["cases"] == []
