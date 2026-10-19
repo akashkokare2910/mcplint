@@ -7,7 +7,11 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from mcp.server.fastmcp import FastMCP
+try:
+    # mcp >= 2 renamed FastMCP to MCPServer; the decorator API is unchanged.
+    from mcp.server.mcpserver import MCPServer as FastMCP
+except ImportError:  # mcp 1.x
+    from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 from pydantic import Field
 

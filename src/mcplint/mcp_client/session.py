@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from pydantic import BaseModel
 
 from mcplint.mcp_client.canonical import stable_tool_id
 from mcplint.mcp_client.stdio import parse_command
@@ -21,8 +22,21 @@ SNAPSHOT_SCHEMA_VERSION = "1.0"
 __all__ = ["collect_stdio_snapshot", "tool_from_mcp", "parse_command"]
 
 
+def _wire(model: BaseModel) -> dict[str, Any]:
+    """An SDK model in MCP wire format (camelCase keys), whatever the SDK version.
+
+    The ``mcp`` SDK renamed its Python attributes from the protocol's camelCase
+    (``inputSchema``, ``serverInfo``) to snake_case in 2.x, keeping camelCase as
+    aliases. Reading through an alias-keyed dump depends only on the protocol,
+    which is stable, rather than on whichever attribute names the installed SDK
+    uses.
+    """
+    return model.model_dump(mode="json", by_alias=True)
+
+
 def tool_from_mcp(server_name: str, tool: SDKTool) -> ToolContract:
-    schema = tool.inputSchema or {"type": "object"}
+    wire = _wire(tool)
+    schema: dict[str, Any] = wire.get("inputSchema") or {"type": "object"}
     properties: dict[str, object] = schema.get("properties", {})
     required: list[str] = schema.get("required", [])
 
@@ -37,24 +51,25 @@ def tool_from_mcp(server_name: str, tool: SDKTool) -> ToolContract:
     ]
 
     annotations = ToolAnnotation()
-    if tool.annotations is not None:
+    hints: dict[str, Any] | None = wire.get("annotations")
+    if hints is not None:
         annotations = ToolAnnotation(
-            title=tool.annotations.title,
-            read_only_hint=tool.annotations.readOnlyHint,
-            destructive_hint=tool.annotations.destructiveHint,
-            idempotent_hint=tool.annotations.idempotentHint,
-            open_world_hint=tool.annotations.openWorldHint,
+            title=hints.get("title"),
+            read_only_hint=hints.get("readOnlyHint"),
+            destructive_hint=hints.get("destructiveHint"),
+            idempotent_hint=hints.get("idempotentHint"),
+            open_world_hint=hints.get("openWorldHint"),
         )
 
     return ToolContract(
-        id=stable_tool_id(server_name, tool.name),
-        name=tool.name,
-        description=tool.description,
+        id=stable_tool_id(server_name, wire["name"]),
+        name=wire["name"],
+        description=wire.get("description"),
         input_schema=schema,
-        output_schema=tool.outputSchema,
+        output_schema=wire.get("outputSchema"),
         parameters=parameters,
         annotations=annotations,
-        raw=tool.model_dump(mode="json"),
+        raw=wire,
     )
 
 
@@ -63,9 +78,9 @@ async def collect_stdio_snapshot(
 ) -> MCPServerSnapshot:
     params = StdioServerParameters(command=command, args=args, env=env)
     async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
-        init_result = await session.initialize()
-        server_name = init_result.serverInfo.name
-        server_version = init_result.serverInfo.version
+        server_info = _wire(await session.initialize())["serverInfo"]
+        server_name = server_info["name"]
+        server_version = server_info["version"]
         listed = await session.list_tools()
         tools = [tool_from_mcp(server_name, t) for t in listed.tools]
 
