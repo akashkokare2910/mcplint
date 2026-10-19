@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `skills/mcplint/SKILL.md`, an Agent Skill that teaches a coding agent when
+  to run MCPLint and how to work through its findings.
+
 ### Fixed
 
 - MCPLint could not connect to any server when installed alongside `mcp` 2.x,
