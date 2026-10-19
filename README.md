@@ -38,6 +38,13 @@ connects over stdio, retrieves the tool list, runs 15 deterministic rules, and
 prints a scored report with a non-zero exit code when something is wrong, the
 same way `eslint` gates a pull request.
 
+### From an AI agent
+
+[`skills/mcplint/SKILL.md`](skills/mcplint/SKILL.md) is an Agent Skill that
+teaches a coding agent (Claude Code and compatible agents) when to run
+MCPLint and how to work through its findings: baseline, suggested fixes,
+edit, verify.
+
 ## Example output
 
 ```
