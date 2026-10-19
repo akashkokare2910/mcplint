@@ -7,7 +7,11 @@ Run directly: python examples/ambiguous_customer_server/server.py
 
 from __future__ import annotations
 
-from mcp.server.fastmcp import FastMCP
+try:
+    # mcp >= 2 renamed FastMCP to MCPServer; the decorator API is unchanged.
+    from mcp.server.mcpserver import MCPServer as FastMCP
+except ImportError:  # mcp 1.x
+    from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 mcp = FastMCP("ambiguous-customer-server")

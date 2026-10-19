@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- MCPLint could not connect to any server when installed alongside `mcp` 2.x,
+  which renamed its model attributes from camelCase to snake_case. Every
+  command that talks to a server failed with "unhandled errors in a
+  TaskGroup". SDK objects are now read in MCP wire format, which both SDK
+  majors produce, and CI tests against both.
+- The example servers start on `mcp` 2.x, where `FastMCP` is named `MCPServer`.
+
+### Changed
+
+- The `mcp` dependency is bounded to `>=1.28,<3`, so a future major cannot
+  break installs silently.
+
 ## [0.2.0] - 2026-07-27
 
 ContractLab: behavioral reliability testing for MCP tool contracts.

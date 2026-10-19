@@ -37,3 +37,20 @@ def test_tool_from_mcp_handles_missing_annotations_and_description() -> None:
     assert contract.description is None
     assert contract.parameters == []
     assert contract.annotations.read_only_hint is None
+
+
+def test_raw_tool_is_recorded_in_mcp_wire_format() -> None:
+    """The snapshot keeps protocol (camelCase) keys whichever mcp SDK is installed.
+
+    mcp 2.x renamed the Python attributes to snake_case; reading attributes
+    broke every connection. Field access goes through the alias-keyed dump.
+    """
+    sdk_tool = Tool(
+        name="delete_customer",
+        inputSchema={"type": "object"},
+        annotations=ToolAnnotations(destructiveHint=True),
+    )
+    contract = tool_from_mcp("server", sdk_tool)
+    assert contract.raw["inputSchema"] == {"type": "object"}
+    assert contract.raw["annotations"]["destructiveHint"] is True
+    assert contract.annotations.destructive_hint is True
